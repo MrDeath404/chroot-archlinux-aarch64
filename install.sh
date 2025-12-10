@@ -1,5 +1,5 @@
 success() {
-    echo -e "[\033[33mSUCCESS\033[0m] - $1"
+    echo -e "[\033[32mSUCCESS\033[0m] - $1"
 }
 
 info(){
