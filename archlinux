@@ -1,5 +1,24 @@
 #!/bin/bash
 
+tmpPath="/data/local/tmp"
+archPath="/data/local/arch"
+
+warning() {
+    echo -e "[\033[31mError\033[0m] - $1"
+}
+
+success() {
+    echo -e "[\033[33mWarning\033[0m] - $1"
+}
+
+info(){
+    echo -e "[\033[34mInfo\033[0m] - $1"
+}
+
+error(){
+    echo -e "[\033[31mError\033[0m] - $1" >&2
+}
+
 is_root() {
     if su -c "exit" > /dev/null 2>&1; then
         return 0
@@ -7,54 +26,199 @@ is_root() {
     return 1
 }
 
+get_arg_no_check() {
+    local arg="$1"
+    local argName="$2"
+
+    if [[ -z "$arg" || "$arg" =~ ^-- ]]; then
+        echo ""
+        return
+    fi
+    echo "$arg"
+}
+
 get_arg() {
     local arg="$1"
     local argName="$2"
 
     if [[ -z "$arg" || "$arg" =~ ^-- ]]; then
-        echo "Error: missing value for \"$argName\"" >&2
+        error "Missing value for \"$argName\"" 
         exit 1
     fi
-
     echo "$arg"
 }
 
 setup_env() {
-    pkg update -y
+    info "Installing needed packages"
+    pkg update
     pkg upgrade -y
     pkg install busybox
     pkg install tsu
     if is_root; then
-
+        info "Superuser permision was granted by root provicer" 
     else 
-        echo "[ERROR] - Grant superuser permission "
+        error "Can't not acceess superuser permission"
+        info "Root your device with magisk or kernelsu based root provider and grant superuser permission"
+        exit 1
     fi
+    success "Packages were successfully installed"
+}
+
+install_arch() {
+    info "Installing ArchLinux"
+    if [ -d "$archPath" ]; then
+        info "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
+        exit 0
+    fi
+    sudo mkdir -p "$archPath"
+    zipPath="$1"
+    if [ -z "$zipPath" ]; then
+        warning "ArchLinux zip was not found"
+        info "Downloading ArchLinux Generic for aarch64(arm64)"
+        if wget --progress=bar:force -q -P "$tmpPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+            success "ArchLinux Generic ZIP was downloaded successfully"
+            info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
+        else 
+            error "Unknown error while downloading ArchLinux Generic ZIP"
+            exit 1
+        fi
+        zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
+    fi
+    info "Unpacking ArchLinux Generic ZIP at $archPath"
+    if sudo tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
+        success "Archive was successfully unpacked to $archPath"
+    else
+        error "Failed to unpack archive. It may have been corrupted during download."
+        exit 1
+    fi
+    info "Performing additional steps to set up Arch Linux"
+    sudo mkdir -p "$archPath/media/sdcard"
+    sudo cat > "$archPath/etc/resolv.conf" <<EOF
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+nameserver 2606:4700:4700::1111
+nameserver 2606:4700:4700::1001
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+nameserver 2001:4860:4860::8888
+nameserver 2001:4860:4860::8844
+EOF
+    sudo cat > "$archPath/root/reset-pacman.sh" <<EOF
+#!/bin/sh
+pacman-key --init
+pacman-key --populate archlinuxarm
+EOF
+    sudo chmod +x "$archPath/root/reset-pacman.sh"
+}
+
+is_arch_booted() {
+    busybox mountpoint -q "$archPath/proc" &&
+    busybox mountpoint -q "$archPath/sys" &&
+    busybox mountpoint -q "$archPath/dev" &&
+    busybox mountpoint -q "$archPath/dev/pts"
+}
+
+boot_arch() {
+    if is_arch_booted; then
+        info "ArchLinux is already running"
+        exit 0
+    fi
+    info "Booting ArchLinux"
+    {
+        busybox mount -o remount,dev,suid /data
+        busybox mount -o bind /dev "$archPath/dev"
+        busybox mount -t proc proc "$archPath/proc"
+        busybox mount -t sysfs sysfs "$archPath/sys"
+        busybox mount -t devpts devpts "$archPath/dev/pts"
+        busybox mount -o bind /sdcard "$archPath/media/sdcard"
+    } || {
+        error "Failed to boot ArchLinux"
+        exit 1
+    }
+    success "ArchLinux booted and it's ready to use"
+}
+
+login_arch() {
+    if !is_arch_booted; then
+        boot_arch
+    fi
+    info "Logging in as $1"
+    busybox chroot "$archPath" /bin/su - $1
+}
+
+shutdown_arch() {
+    info "Shutting down ArchLinux"
+    {
+        busybox umount -l "$archPath/media/sdcard"
+        busybox umount -l "$archPath/dev/pts"
+        busybox umount -l "$archPath/proc"
+        busybox umount -l "$archPath/sys"
+        busybox umount -l "$archPath/dev"
+    } || {
+        error "Failed to shutdown ArchLinux"
+        exit 1
+    }
+    success "ArchLinux has been shut down successfully"
+}
+
+reboot_arch() {
+    shutdown_arch
+    boot_arch
+}
+
+uninstall_arch() {
+    info "Uninstalling ArchLinux"
+    if sudo rm -rf "$archPath"; then
+        success "ArchLinux has been uninstalled"
+    else 
+        error "Failed to uninstall ArchLinux"
+        exit 1
+    fi
+}
+
+reinstall_arch() {
+    uninstall_arch
+    install_arch
 }
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --setup)
-            
+        setup)
+            setup_env
             shift
             ;;
-        --install)
-            echo "Installing..."
+        install)
+            zipPath=$(get_arg_no_check "$2" "$1")
+            install_arch $zipPath
             shift
             ;;
-        --reinstall)
-            echo "Reinstalling..."
+        reinstall)
+            reinstall_arch
             shift
             ;;
-        --login)
+        login)
             user=$(get_arg "$2" "$1")
+            login_arch $user
             shift 2
             ;;
-        --help)
-            echo "Usage: $0 [--install|--reinstall|--login <user>|--help]"
+        boot)
+            boot_arch
+            shift
+            ;;
+        shutdown)
+            shutdown_arch
+            shift
+            ;;
+        reboot)
+            reboot_arch
+            shift
+            ;;
+        help)
+            info "Usage: $0 {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | help}"
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
+            warning "Unknown option: $1"
             exit 1
             ;;
     esac
