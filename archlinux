@@ -52,6 +52,7 @@ setup_env() {
     info "Installing needed packages"
     pkg update
     pkg upgrade -y
+    pkg install root-repo
     pkg install busybox
     pkg install tsu
     if is_root; then
