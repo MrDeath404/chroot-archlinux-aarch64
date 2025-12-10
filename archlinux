@@ -96,7 +96,7 @@ install_arch() {
         info "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
         exit 0
     fi
-    if !sudo test -d "$tmpPath"; then
+    if ! sudo test -d "$tmpPath"; then
         sudo mkdir -p "$tmpPath"
     fi
     if sudo test -d "$zipPath"; then
