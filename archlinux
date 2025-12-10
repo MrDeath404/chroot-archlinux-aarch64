@@ -1,0 +1,61 @@
+#!/bin/bash
+
+is_root() {
+    if su -c "exit" > /dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+get_arg() {
+    local arg="$1"
+    local argName="$2"
+
+    if [[ -z "$arg" || "$arg" =~ ^-- ]]; then
+        echo "Error: missing value for \"$argName\"" >&2
+        exit 1
+    fi
+
+    echo "$arg"
+}
+
+setup_env() {
+    pkg update -y
+    pkg upgrade -y
+    pkg install busybox
+    pkg install tsu
+    if is_root; then
+
+    else 
+        echo "[ERROR] - Grant superuser permission "
+    fi
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --setup)
+            
+            shift
+            ;;
+        --install)
+            echo "Installing..."
+            shift
+            ;;
+        --reinstall)
+            echo "Reinstalling..."
+            shift
+            ;;
+        --login)
+            user=$(get_arg "$2" "$1")
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 [--install|--reinstall|--login <user>|--help]"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
