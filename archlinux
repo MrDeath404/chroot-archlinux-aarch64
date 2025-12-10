@@ -4,19 +4,19 @@ tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
 
 warning() {
-    echo -e "[\033[31mError\033[0m] - $1"
+    echo -e "[\033[31mWARNING\033[0m] - $1"
 }
 
 success() {
-    echo -e "[\033[33mWarning\033[0m] - $1"
+    echo -e "[\033[33mSUCCESS\033[0m] - $1"
 }
 
 info(){
-    echo -e "[\033[34mInfo\033[0m] - $1"
+    echo -e "[\033[34mINFO\033[0m] - $1"
 }
 
 error(){
-    echo -e "[\033[31mError\033[0m] - $1" >&2
+    echo -e "[\033[31mERROR\033[0m] - $1" >&2
 }
 
 is_root() {
@@ -64,18 +64,12 @@ setup_env() {
     success "Packages were successfully installed"
 }
 
-install_arch() {
-    info "Installing ArchLinux"
-    if [ -d "$archPath" ]; then
-        info "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
-        exit 0
-    fi
-    sudo mkdir -p "$archPath"
-    zipPath="$1"
+download_zip() {
+    local zipPath="$1"
     if [ -z "$zipPath" ]; then
         warning "ArchLinux zip was not found"
         info "Downloading ArchLinux Generic for aarch64(arm64)"
-        if wget --progress=bar:force -q -P "$tmpPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+        if wget -P "$tmpPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -q --show-progress; then
             success "ArchLinux Generic ZIP was downloaded successfully"
             info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
         else 
@@ -84,11 +78,39 @@ install_arch() {
         fi
         zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     fi
+    echo "$zipPath"
+}
+
+redownload_zip() {
+    sudo rm -rf "$tmpPath"
+    sudo mkdir -p "$tmpPath"
+    echo $(download_zip)
+}
+
+install_arch() {
+    zipPath="$1"
+
+    info "Installing ArchLinux"
+    if [ -d "$archPath" ]; then
+        info "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
+        exit 0
+    fi
+    if !sudo test -d "$tmpPath"; then
+        sudo mkdir -p "$tmpPath"
+    fi
+    if sudo test -d "$zipPath"; then
+        info "ArchLinux Generic ZIP was found at $tmpPath"
+        info "If you want to redownload it use \"redownload\" option"
+    else
+        download_zip "$1"
+    fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
     if sudo tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive. It may have been corrupted during download."
+        sudo rm -rf "$zipPath"
+        sudo rm -rf "$archPath"
         exit 1
     fi
     info "Performing additional steps to set up Arch Linux"
@@ -181,7 +203,11 @@ reinstall_arch() {
     install_arch
 }
 
-while [ $# -gt 0 ]; do
+help() {
+    info "Usage: $0 {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | help}"
+}
+
+while [ "$#" -gt 0 ]; do
     case "$1" in
         setup)
             setup_env
@@ -213,13 +239,22 @@ while [ $# -gt 0 ]; do
             reboot_arch
             shift
             ;;
+        redownload)
+            redownload_zip
+            shift
+            ;;
         help)
-            info "Usage: $0 {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | help}"
+            help
             exit 0
             ;;
         *)
             warning "Unknown option: $1"
+            help
             exit 1
             ;;
     esac
 done
+
+if [ "$#" -eq 0 ]; then
+    help
+fi
