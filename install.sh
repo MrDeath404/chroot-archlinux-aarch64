@@ -11,6 +11,9 @@ error(){
 }
 
 info "Installing ArchLinux manager for Termux"
+if [ -f "./archlinux" ]; then
+    rm -f "./archlinux"
+fi
 wget https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux -q --show-progress
 chmod +x ./archlinux
 mv ./archlinux $HOME/../usr/bin
