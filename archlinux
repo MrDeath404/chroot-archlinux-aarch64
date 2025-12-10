@@ -205,7 +205,7 @@ reinstall_arch() {
 }
 
 help() {
-    info "Usage: $0 {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | help}"
+    info "Usage: archlinux {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | help}"
 }
 
 while [ "$#" -gt 0 ]; do
