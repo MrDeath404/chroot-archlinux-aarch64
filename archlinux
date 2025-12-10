@@ -208,6 +208,10 @@ help() {
     info "Usage: archlinux {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | help}"
 }
 
+if [ "$#" -eq 0 ]; then
+    help
+fi
+
 while [ "$#" -gt 0 ]; do
     case "$1" in
         setup)
@@ -255,7 +259,3 @@ while [ "$#" -gt 0 ]; do
             ;;
     esac
 done
-
-if [ "$#" -eq 0 ]; then
-    help
-fi
