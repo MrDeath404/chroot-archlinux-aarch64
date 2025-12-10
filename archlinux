@@ -225,8 +225,18 @@ reinstall_arch() {
     install_arch
 }
 
+clean_zip() {
+    info "Removing ArchLinux Generic ZIP"
+    if sudo rm -rf "$tmpPath"; then
+        success "ArchLinux Generic ZIP was successfully removed"
+    else
+        error "Failed to remove ArchLinux Generic ZIP"
+        exit 1
+    fi
+}
+
 help() {
-    info "Usage: archlinux {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | help}"
+    info "Usage: archlinux {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | clean | help}"
 }
 
 if [ "$#" -eq 0 ]; then
@@ -268,6 +278,9 @@ while [ "$#" -gt 0 ]; do
         redownload)
             redownload_zip
             shift
+            ;;
+        clean)
+            clean_zip
             ;;
         help)
             help
