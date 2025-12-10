@@ -14,7 +14,7 @@ info "Installing ArchLinux manager for Termux"
 if [ -f "./archlinux" ]; then
     rm -f "./archlinux"
 fi
-bash <(wget -qO- "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux")
+curl -L -o archlinux "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux"
 chmod +x ./archlinux
 mv ./archlinux $HOME/../usr/bin
 
