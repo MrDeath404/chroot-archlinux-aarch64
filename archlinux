@@ -70,7 +70,7 @@ download_zip() {
     if [ -z "$zipPath" ]; then
         warning "ArchLinux zip was not found"
         info "Downloading ArchLinux Generic for aarch64(arm64)"
-        if sudo wget -P "$tmpPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz" -q --show-progress; then
+        if sudo curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
             success "ArchLinux Generic ZIP was downloaded successfully"
             info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
         else 
