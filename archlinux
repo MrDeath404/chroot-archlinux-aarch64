@@ -1,4 +1,4 @@
-#!/bin/su
+#!/bin/sh
 
 tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
@@ -95,6 +95,7 @@ install_arch() {
     else
         info "Creating ArchLinux container at $archPath"
         mkdir -p "$archPath"
+    fi
     if ! test -d "$tmpPath"; then
         mkdir -p "$tmpPath"
     fi
