@@ -54,7 +54,6 @@ setup_env() {
     pkg upgrade -y
     pkg install root-repo
     pkg install busybox
-    pkg install tsu
     if is_root; then
         info "Superuser permision was granted by root provicer" 
     else 
@@ -68,7 +67,7 @@ setup_env() {
 download_zip() {
     warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic for aarch64(arm64)"
-    if curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+    if su -c curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
         info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     else 
@@ -78,8 +77,8 @@ download_zip() {
 }
 
 redownload_zip() {
-    rm -rf "$tmpPath"
-    mkdir -p "$tmpPath"
+    su -c rm -rf "$tmpPath"
+    su -c mkdir -p "$tmpPath"
     echo $(download_zip)
 }
 
@@ -89,34 +88,34 @@ install_arch() {
     if [ -z "$zipPath" ]; then
         zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     fi
-    if test -d "$archPath"; then
+    if su -c test -d "$archPath"; then
         warning "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
         exit 0
     else
         info "Creating ArchLinux container at $archPath"
-        mkdir -p "$archPath"
+        su -c mkdir -p "$archPath"
     fi
-    if ! test -d "$tmpPath"; then
-        mkdir -p "$tmpPath"
+    if ! su -c test -d "$tmpPath"; then
+        su -c mkdir -p "$tmpPath"
     fi
-    if test -f "$zipPath"; then
+    if su -c test -f "$zipPath"; then
         info "ArchLinux Generic ZIP was found at $tmpPath"
         info "If you want to redownload it use \"redownload\" option"
     else
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
+    if su -c tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive. It may have been corrupted during download."
-        rm -rf "$zipPath"
-        rm -rf "$archPath"
+        su -c rm -rf "$zipPath"
+        su -c rm -rf "$archPath"
         exit 1
     fi
     info "Performing additional steps to set up Arch Linux"
-    mkdir -p "$archPath/media/sdcard"
-    cat > "$archPath/etc/resolv.conf" <<EOF
+    su -c mkdir -p "$archPath/media/sdcard"
+    su -c cat > "$archPath/etc/resolv.conf" <<EOF
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 nameserver 2606:4700:4700::1111
@@ -126,19 +125,19 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8888
 nameserver 2001:4860:4860::8844
 EOF
-    cat > "$archPath/root/reset-pacman.sh" <<EOF
+    su -c cat > "$archPath/root/reset-pacman.sh" <<EOF
 #!/bin/sh
 pacman-key --init
 pacman-key --populate archlinuxarm
 EOF
-    chmod +x "$archPath/root/reset-pacman.sh"
+    su -c chmod +x "$archPath/root/reset-pacman.sh"
 }
 
 is_arch_booted() {
-    busybox mountpoint -q "$archPath/proc" &&
-    busybox mountpoint -q "$archPath/sys" &&
-    busybox mountpoint -q "$archPath/dev" &&
-    busybox mountpoint -q "$archPath/dev/pts"
+    su -c busybox mountpoint -q "$archPath/proc" &&
+    su -c busybox mountpoint -q "$archPath/sys" &&
+    su -c busybox mountpoint -q "$archPath/dev" &&
+    su -c busybox mountpoint -q "$archPath/dev/pts"
 }
 
 boot_arch() {
@@ -148,12 +147,12 @@ boot_arch() {
     fi
     info "Booting ArchLinux"
     {
-        busybox mount -o remount,dev,suid /data
-        busybox mount -o bind /dev "$archPath/dev"
-        busybox mount -t proc proc "$archPath/proc"
-        busybox mount -t sysfs sysfs "$archPath/sys"
-        busybox mount -t devpts devpts "$archPath/dev/pts"
-        busybox mount -o bind /sdcard "$archPath/media/sdcard"
+        su -c busybox mount -o remount,dev,suid /data
+        su -c busybox mount -o bind /dev "$archPath/dev"
+        su -c busybox mount -t proc proc "$archPath/proc"
+        su -c busybox mount -t sysfs sysfs "$archPath/sys"
+        su -c busybox mount -t devpts devpts "$archPath/dev/pts"
+        su -c busybox mount -o bind /sdcard "$archPath/media/sdcard"
     } || {
         error "Failed to boot ArchLinux"
         exit 1
@@ -187,17 +186,17 @@ login_arch() {
         boot_arch
     fi
     info "Logging in as $1"
-    busybox chroot "$archPath" /bin/su - $1
+    su -c busybox chroot "$archPath" /bin/su - $1
 }
 
 shutdown_arch() {
     info "Shutting down ArchLinux"
     {
-        busybox umount -l "$archPath/media/sdcard"
-        busybox umount -l "$archPath/dev/pts"
-        busybox umount -l "$archPath/proc"
-        busybox umount -l "$archPath/sys"
-        busybox umount -l "$archPath/dev"
+        su -c busybox umount -l "$archPath/media/sdcard"
+        su -c busybox umount -l "$archPath/dev/pts"
+        su -c busybox umount -l "$archPath/proc"
+        su -c busybox umount -l "$archPath/sys"
+        su -c busybox umount -l "$archPath/dev"
     } || {
         error "Failed to shutdown ArchLinux"
         exit 1
@@ -212,7 +211,7 @@ reboot_arch() {
 
 uninstall_arch() {
     info "Uninstalling ArchLinux"
-    if rm -rf "$archPath"; then
+    if su -c rm -rf "$archPath"; then
         success "ArchLinux has been uninstalled"
     else 
         error "Failed to uninstall ArchLinux"
@@ -227,7 +226,7 @@ reinstall_arch() {
 
 clean_zip() {
     info "Removing ArchLinux Generic ZIP"
-    if rm -rf "$tmpPath"; then
+    if su -c rm -rf "$tmpPath"; then
         success "ArchLinux Generic ZIP was successfully removed"
     else
         error "Failed to remove ArchLinux Generic ZIP"
