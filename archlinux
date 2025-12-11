@@ -4,10 +4,9 @@ archPath="/data/local/distro/arch"
 tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
 scriptSleep="2"
-messageSleep="0.35"
+messageSleep="0.25"
 
 arch_logo() {
-    sleep "$messageSleep"
     printf "\e[34m                  ▄
                  ▄█▄
                 ▄███▄
