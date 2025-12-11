@@ -66,13 +66,15 @@ setup_env() {
 }
 
 download_zip() {
+    local zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic for aarch64(arm64)"
-    if sudo curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+    if sudo curl -L --progress-bar -o "$zipPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
-        info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
+        info "File is located at $zipPath"
     else 
         error "Unknown error while downloading ArchLinux Generic ZIP"
+        su -c rm -rf "$zipPath"
         exit 1
     fi
 }
@@ -293,6 +295,9 @@ while [ "$#" -gt 0 ]; do
             zipPath=$(get_arg_no_check "$2" "$1")
             install_arch $zipPath
             shift
+            if [ -n $zipPath ]; then
+                shift
+            fi
             ;;
         reinstall)
             clear
@@ -301,10 +306,12 @@ while [ "$#" -gt 0 ]; do
             ;;
         login)
             clear
-            user=$(get_arg "$2" "$1")
+            user=$(get_arg_no_check "$2" "$1")
             login_arch $user
             shift
-            shift
+            if [ -n $zipPath ]; then
+                shift
+            fi
             ;;
         boot)
             clear
@@ -329,6 +336,7 @@ while [ "$#" -gt 0 ]; do
         clean)
             clear
             clean_zip
+            shift
             ;;
         help)
             clear
