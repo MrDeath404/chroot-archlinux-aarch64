@@ -4,6 +4,30 @@ tmpPath="/data/local/distro/tmp"
 archPath="/data/local/distro/arch"
 scriptSleep="5s"
 
+arch_logo() {
+    echo -e "\033[36m
+                   -\`
+                  .o+\`
+                 \`ooo/
+                \`+oooo:
+               \`+oooooo:
+               -+oooooo+:
+             \`/:-:++oooo+:
+            \`/++++/+++++++:
+           \`/++++++++++++++:
+          \`/+++ooooooooooooo/\`
+         ./ooosssso++osssssso+\`
+        .oossssso-\`\`\`\`/ossssss+\`
+       -osssssso.      :ssssssso.
+      :osssssss/        osssso+++.
+     /ossssssss/        +ssssooo/-
+   \`/ossssso+/:-        -:/+osssso+-
+  \`+sso+:-\`                 \`.-/+oso:
+ \`++:.                           \`-/+/
+ .\`                                 \`
+\033[0m"
+}
+
 warning() {
     printf "[\e[33mWARNING\e[0m] - %s\n" "$1"
 }
@@ -142,28 +166,7 @@ EOF
         exit 1
     }
     success "ArchLinux was successfully installed"
-    echo -e "\033[36m
-                   -\`
-                  .o+\`
-                 \`ooo/
-                \`+oooo:
-               \`+oooooo:
-               -+oooooo+:
-             \`/:-:++oooo+:
-            \`/++++/+++++++:
-           \`/++++++++++++++:
-          \`/+++ooooooooooooo/\`
-         ./ooosssso++osssssso+\`
-        .oossssso-\`\`\`\`/ossssss+\`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   \`/ossssso+/:-        -:/+osssso+-
-  \`+sso+:-\`                 \`.-/+oso:
- \`++:.                           \`-/+/
- .\`                                 \`
-\033[0m"
-    warning "Use \"archlinux login\" to login frist time"
+    warning "Use \"archlinux login setup\" to login frist time"
 }
 
 is_arch_booted() {
@@ -178,6 +181,7 @@ boot_arch() {
         info "ArchLinux is already running"
         exit 0
     fi
+    arch_logo
     info "Booting ArchLinux"
     {
         sudo busybox mount -o remount,dev,suid /data
@@ -190,27 +194,6 @@ boot_arch() {
         error "Failed to boot ArchLinux"
         exit 1
     }
-echo -e "\033[36m
-                   -\`
-                  .o+\`
-                 \`ooo/
-                \`+oooo:
-               \`+oooooo:
-               -+oooooo+:
-             \`/:-:++oooo+:
-            \`/++++/+++++++:
-           \`/++++++++++++++:
-          \`/+++ooooooooooooo/\`
-         ./ooosssso++osssssso+\`
-        .oossssso-\`\`\`\`/ossssss+\`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   \`/ossssso+/:-        -:/+osssso+-
-  \`+sso+:-\`                 \`.-/+oso:
- \`++:.                           \`-/+/
- .\`                                 \`
-\033[0m"
     success "ArchLinux booted and it's ready to use"
 }
 
