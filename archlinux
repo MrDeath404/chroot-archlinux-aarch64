@@ -78,8 +78,9 @@ setup_env() {
     info "Installing needed packages"
     pkg update
     pkg upgrade -y
-    pkg install root-repo
-    pkg install "$termuxBin/busybox"
+    pkg install root-repo -y
+    pkg install busybox -y
+    pkg install pv -y
     if is_root; then
         info "Superuser permision was granted by root provicer" 
     else 
