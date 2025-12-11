@@ -2,6 +2,7 @@
 
 tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
+scriptSleep="1"
 
 warning() {
     echo -e "[\033[33mWARNING\033[0m] - $1"
@@ -49,6 +50,7 @@ get_arg() {
 }
 
 setup_env() {
+    clear
     info "Installing needed packages"
     pkg update
     pkg upgrade -y
@@ -77,12 +79,14 @@ download_zip() {
 }
 
 redownload_zip() {
+    clear
     su -c rm -rf "$tmpPath"
     su -c mkdir -p "$tmpPath"
     echo $(download_zip)
 }
 
 install_arch() {
+    clear
     zipPath="$1"
 
     if [ -z "$zipPath" ]; then
@@ -104,6 +108,8 @@ install_arch() {
     else
         download_zip
     fi
+    sleep "$(scriptSleep)"
+    clear
     info "Unpacking ArchLinux Generic ZIP at $archPath"
     if su -c tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
         success "Archive was successfully unpacked to $archPath"
@@ -113,9 +119,12 @@ install_arch() {
         su -c rm -rf "$archPath"
         exit 1
     fi
+    sleep "$(scriptSleep)"
+    clear
     info "Performing additional steps to set up Arch Linux"
-    su -c mkdir -p "$archPath/media/sdcard"
-    su -c cat > "$archPath/etc/resolv.conf" <<EOF
+    {
+        su -c mkdir -p "$archPath/media/sdcard"
+        cat << "EOF" | su -c "tee '$archPath/etc/resolv.conf' >/dev/null"
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 nameserver 2606:4700:4700::1111
@@ -125,12 +134,41 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8888
 nameserver 2001:4860:4860::8844
 EOF
-    su -c cat > "$archPath/root/reset-pacman.sh" <<EOF
+        cat << "EOF" | su -c "tee '$archPath/root/reset-pacman.sh' >/dev/null"
 #!/bin/sh
 pacman-key --init
 pacman-key --populate archlinuxarm
 EOF
-    su -c chmod +x "$archPath/root/reset-pacman.sh"
+        su -c chmod +x "$archPath/root/reset-pacman.sh"
+    } || {
+        error "Failed to perform additional steps"
+        exit 1
+    }
+    success "ArchLinux was successfully installed"
+    sleep "$(scriptSleep)"
+    clear
+    echo -e "\033[36m
+                   -\`
+                  .o+\`
+                 \`ooo/
+                \`+oooo:
+               \`+oooooo:
+               -+oooooo+:
+             \`/:-:++oooo+:
+            \`/++++/+++++++:
+           \`/++++++++++++++:
+          \`/+++ooooooooooooo/\`
+         ./ooosssso++osssssso+\`
+        .oossssso-\`\`\`\`/ossssss+\`
+       -osssssso.      :ssssssso.
+      :osssssss/        osssso+++.
+     /ossssssss/        +ssssooo/-
+   \`/ossssso+/:-        -:/+osssso+-
+  \`+sso+:-\`                 \`.-/+oso:
+ \`++:.                           \`-/+/
+ .\`                                 \`
+\033[0m"
+    warning "Use \"archlinux login\" to login frist time"
 }
 
 is_arch_booted() {
@@ -141,6 +179,7 @@ is_arch_booted() {
 }
 
 boot_arch() {
+    clear
     if is_arch_booted; then
         info "ArchLinux is already running"
         exit 0
@@ -184,12 +223,17 @@ echo -e "\033[36m
 login_arch() {
     if !is_arch_booted; then
         boot_arch
+        sleep "$(scriptSleep)"
+        clear
+    else
+        clear
     fi
     info "Logging in as $1"
     su -c busybox chroot "$archPath" /bin/su - $1
 }
 
 shutdown_arch() {
+    clear
     info "Shutting down ArchLinux"
     {
         su -c busybox umount -l "$archPath/media/sdcard"
@@ -206,10 +250,12 @@ shutdown_arch() {
 
 reboot_arch() {
     shutdown_arch
+    sleep "$(scriptSleep)"
     boot_arch
 }
 
 uninstall_arch() {
+    clear
     info "Uninstalling ArchLinux"
     if su -c rm -rf "$archPath"; then
         success "ArchLinux has been uninstalled"
@@ -221,10 +267,12 @@ uninstall_arch() {
 
 reinstall_arch() {
     uninstall_arch
+    sleep "$(scriptSleep)"
     install_arch
 }
 
 clean_zip() {
+    clear
     info "Removing ArchLinux Generic ZIP"
     if su -c rm -rf "$tmpPath"; then
         success "ArchLinux Generic ZIP was successfully removed"
