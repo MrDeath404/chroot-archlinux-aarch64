@@ -2,22 +2,22 @@
 
 tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
-scriptSleep="7"
+scriptSleep="20"
 
 warning() {
-    printf "[\033[33mWARNING\033[0m] - %s\n" "$1"
+    echo -e "[\e[33mWARNING\e[0m] - " "$1"
 }
 
 success() {
-    printf "[\033[32mSUCCESS\033[0m] - %s\n" "$1"
+    echo -e "[\e[32mSUCCESS\e[0m] - " "$1"
 }
 
 info() {
-    printf "[\033[34mINFO\033[0m] - %s\n" "$1"
+    echo -e "[\e[34mINFO\e[0m] - " "$1"
 }
 
 error() {
-    printf "[\033[31mERROR\033[0m] - %s\n" "$1" >&2
+    echo -e "[\e[31mERROR\e[0m] - " "$1" >&2
 }
 
 is_root() {
@@ -50,7 +50,6 @@ get_arg() {
 }
 
 setup_env() {
-    clear
     info "Installing needed packages"
     pkg update
     pkg upgrade -y
@@ -79,14 +78,12 @@ download_zip() {
 }
 
 redownload_zip() {
-    clear
     su -c rm -rf "$tmpPath"
     su -c mkdir -p "$tmpPath"
     echo $(download_zip)
 }
 
 install_arch() {
-    clear
     zipPath="$1"
 
     if [ -z "$zipPath" ]; then
@@ -108,10 +105,10 @@ install_arch() {
     else
         download_zip
     fi
-    sleep "$(scriptSleep)"
-    clear
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if su -c tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
+    if su -c tar --extract --verbose --file=\"$zipPath\" \
+        --numeric-owner --directory=\"$archPath\" \
+        --checkpoint=1 --checkpoint-action=progress ; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive. It may have been corrupted during download."
@@ -119,8 +116,6 @@ install_arch() {
         su -c rm -rf "$archPath"
         exit 1
     fi
-    sleep "$(scriptSleep)"
-    clear
     info "Performing additional steps to set up Arch Linux"
     {
         su -c mkdir -p "$archPath/media/sdcard"
@@ -145,8 +140,6 @@ EOF
         exit 1
     }
     success "ArchLinux was successfully installed"
-    sleep "$(scriptSleep)"
-    clear
     echo -e "\033[36m
                    -\`
                   .o+\`
@@ -179,7 +172,6 @@ is_arch_booted() {
 }
 
 boot_arch() {
-    clear
     if is_arch_booted; then
         info "ArchLinux is already running"
         exit 0
@@ -223,17 +215,16 @@ echo -e "\033[36m
 login_arch() {
     if !is_arch_booted; then
         boot_arch
-        sleep "$(scriptSleep)"
-        clear
-    else
-        clear
     fi
-    info "Logging in as $1"
-    su -c busybox chroot "$archPath" /bin/su - $1
+    user="$1"
+    if [ -z "$user" ]; then
+        user="root"
+    fi
+    info "Logging in as $user"
+    su -c busybox chroot "$archPath" /bin/su - $user
 }
 
 shutdown_arch() {
-    clear
     info "Shutting down ArchLinux"
     {
         su -c busybox umount -l "$archPath/media/sdcard"
@@ -251,11 +242,11 @@ shutdown_arch() {
 reboot_arch() {
     shutdown_arch
     sleep "$(scriptSleep)"
+    clear
     boot_arch
 }
 
 uninstall_arch() {
-    clear
     info "Uninstalling ArchLinux"
     if su -c rm -rf "$archPath"; then
         success "ArchLinux has been uninstalled"
@@ -268,11 +259,11 @@ uninstall_arch() {
 reinstall_arch() {
     uninstall_arch
     sleep "$(scriptSleep)"
+    clear
     install_arch
 }
 
 clean_zip() {
-    clear
     info "Removing ArchLinux Generic ZIP"
     if su -c rm -rf "$tmpPath"; then
         success "ArchLinux Generic ZIP was successfully removed"
@@ -293,52 +284,62 @@ fi
 while [ "$#" -gt 0 ]; do
     case "$1" in
         setup)
+            clear
             setup_env
             shift
             ;;
         install)
+            clear
             zipPath=$(get_arg_no_check "$2" "$1")
             install_arch $zipPath
             shift
             ;;
         reinstall)
+            clear
             reinstall_arch
             shift
             ;;
         login)
+            clear
             user=$(get_arg "$2" "$1")
             login_arch $user
-            shift 2
+            shift
+            shift
             ;;
         boot)
+            clear
             boot_arch
             shift
             ;;
         shutdown)
+            clear
             shutdown_arch
             shift
             ;;
         reboot)
+            clear
             reboot_arch
             shift
             ;;
         redownload)
+            clear
             redownload_zip
             shift
             ;;
         clean)
+            clear
             clean_zip
             ;;
         help)
+            clear
             help
             exit 0
             ;;
         *)
+            clear
             warning "Unknown option: $1"
             help
             exit 1
             ;;
     esac
 done
-
-exit 0
