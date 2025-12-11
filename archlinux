@@ -2,22 +2,22 @@
 
 tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
-scriptSleep="1"
+scriptSleep="7"
 
 warning() {
-    echo -e "[\033[33mWARNING\033[0m] - $1"
+    printf "[\033[33mWARNING\033[0m] - %s\n" "$1"
 }
 
 success() {
-    echo -e "[\033[32mSUCCESS\033[0m] - $1"
+    printf "[\033[32mSUCCESS\033[0m] - %s\n" "$1"
 }
 
-info(){
-    echo -e "[\033[34mINFO\033[0m] - $1"
+info() {
+    printf "[\033[34mINFO\033[0m] - %s\n" "$1"
 }
 
-error(){
-    echo -e "[\033[31mERROR\033[0m] - $1" >&2
+error() {
+    printf "[\033[31mERROR\033[0m] - %s\n" "$1" >&2
 }
 
 is_root() {
