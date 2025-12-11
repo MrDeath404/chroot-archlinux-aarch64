@@ -1,8 +1,8 @@
 #!/bin/sh
 
-tmpPath="/data/local/tmp"
-archPath="/data/local/arch"
-scriptSleep="20"
+tmpPath="/data/local/distro/tmp"
+archPath="/data/local/distro/arch"
+scriptSleep="10s"
 
 warning() {
     echo -e "[\033[33mWARNING\033[0m] - " "$1"
@@ -12,11 +12,11 @@ success() {
     echo -e "[\033[32mSUCCESS\033[0m] - $1"
 }
 
-info(){
+info() {
     echo -e "[\033[34mINFO\033[0m] - $1"
 }
 
-error(){
+error() {
     echo -e "[\033[31mERROR\033[0m] - $1" >&2
 }
 

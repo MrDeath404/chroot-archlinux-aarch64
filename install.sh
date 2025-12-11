@@ -2,14 +2,15 @@ success() {
     echo -e "[\033[32mSUCCESS\033[0m] - $1"
 }
 
-info(){
+info() {
     echo -e "[\033[34mINFO\033[0m] - $1"
 }
 
-error(){
+error() {
     echo -e "[\033[31mERROR\033[0m] - $1" >&2
 }
 
+clear
 info "Installing ArchLinux manager for Termux"
 if [ -f "./archlinux" ]; then
     rm -f "./archlinux"
