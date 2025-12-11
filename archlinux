@@ -134,7 +134,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if pv "$zipPath" | sudo "$termuxBin/tar" --extract --gzip \
+    if sudo pv "$zipPath" | sudo "$termuxBin/tar" --extract --gzip \
         --numeric-owner --directory="$archPath" --file -; then
         success "Archive was successfully unpacked to $archPath"
     else
