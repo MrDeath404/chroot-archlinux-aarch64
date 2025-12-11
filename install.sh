@@ -1,13 +1,15 @@
+#!/bin/bash
+
 success() {
-    echo -e "[\033[32mSUCCESS\033[0m] - $1"
+    echo  "[\033[32mSUCCESS\033[0m] - $1"
 }
 
 info() {
-    echo -e "[\033[34mINFO\033[0m] - $1"
+    echo "[\033[34mINFO\033[0m] - $1"
 }
 
 error() {
-    echo -e "[\033[31mERROR\033[0m] - $1" >&2
+    echo "[\033[31mERROR\033[0m] - $1" >&2
 }
 
 clear
