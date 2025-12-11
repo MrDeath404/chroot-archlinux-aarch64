@@ -146,7 +146,6 @@ install_arch() {
         su -c rm -rf "$archPath"
         exit 1
     fi
-    set +o pipefail
     info "Performing additional steps to set up ArchLinux"
     {
         su -c mkdir -p "$archPath/media/sdcard"
