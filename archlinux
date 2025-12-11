@@ -79,12 +79,14 @@ get_arg() {
 
 setup_env() {
     info "Installing needed packages"
-    pkg update
-    pkg upgrade -y
-    pkg install root-repo -y
-    pkg install busybox -y
-    pkg install pv -y
-    pkg install bsdtar -y
+    {
+        pkg update
+        pkg upgrade -y
+        pkg install root-repo -y
+        pkg install busybox -y
+        pkg install bsdtar -y
+    } || error "Failed to install some packages"
+    success "Packages were successfully installed"
     if is_root; then
         info "Superuser permision was granted by root provicer" 
     else 
@@ -92,7 +94,6 @@ setup_env() {
         info "Root your device with magisk or kernelsu based root provider and grant superuser permission"
         exit 1
     fi
-    success "Packages were successfully installed"
 }
 
 download_zip() {
@@ -138,8 +139,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    set -o pipefail
-    if sudo "$termuxBin/pv" "$zipPath" | sudo "$termuxBin/bsdtar" -xpf - -C "$archPath"; then
+    if sudo "$termuxBin/bsdtar" -xpf - -C "$archPath"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
