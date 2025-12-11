@@ -139,7 +139,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/bsdtar" -xpf $zipPath -C "$archPath"; then
+    if sudo "$termuxBin/tar -xpf $zipPath -C $archPath"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
