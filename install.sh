@@ -1,10 +1,9 @@
 #!/bin/bash
 
-messageSleep="0.35"
+messageSleep="0.1"
 
 arch_logo() {
-    sleep "$messageSleep"
-    printf "\e[34m                  ▄
+    printf "\e[36m                  ▄
                  ▄█▄
                 ▄███▄
                ▄█████▄
