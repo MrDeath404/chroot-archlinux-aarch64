@@ -81,7 +81,7 @@ setup_env() {
     pkg install root-repo -y
     pkg install busybox -y
     pkg install pv -y
-    pkg install gnutar -y
+    pkg install bsdtar -y
     if is_root; then
         info "Superuser permision was granted by root provicer" 
     else 
@@ -135,8 +135,8 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/pv $zipPath" | sudo "$termuxBin/gtar --extract --gzip \
-        --numeric-owner --directory=$archPath --file -"; then
+    if sudo "$termuxBin/pv $zipPath" | \
+       sudo "$termuxBin/bsdtar -xpf - -C '$archPath' 2>/dev/null"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
@@ -146,7 +146,6 @@ install_arch() {
     info "Performing additional steps to set up ArchLinux"
     {
         su -c mkdir -p "$archPath/media/sdcard"
-        touch "$archPath/etc/resolv.conf"
         cat << "EOF" | su -c "tee \"$archPath/etc/resolv.conf\" >/dev/null"
 nameserver 1.1.1.1
 nameserver 1.0.0.1
@@ -157,7 +156,6 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8888
 nameserver 2001:4860:4860::8844
 EOF
-        touch "$archPath/root/reset-pacman.sh"
         cat << "EOF" | su -c "tee \"$archPath/root/reset-pacman.sh\" >/dev/null"
 #!/bin/sh
 pacman-key --init
@@ -236,7 +234,7 @@ shutdown_arch() {
 
 reboot_arch() {
     shutdown_arch
-    sleep "$(scriptSleep)"
+    sleep "$scriptSleep"
     clear
     boot_arch
 }
@@ -253,7 +251,7 @@ remove_arch() {
 
 reinstall_arch() {
     remove_arch
-    sleep "$(scriptSleep)"
+    sleep "$scriptSleep"
     clear
     install_arch
 }
