@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tmpPath="/data/local/distro/tmp"
 archPath="/data/local/distro/arch"
