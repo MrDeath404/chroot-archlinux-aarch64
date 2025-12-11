@@ -4,7 +4,7 @@ archPath="/data/local/distro/arch"
 tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
 scriptSleep="2"
-messageSleep="0.15"
+messageSleep="0.35"
 
 arch_logo() {
     echo -e "\033[36m
