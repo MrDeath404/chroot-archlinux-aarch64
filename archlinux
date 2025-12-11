@@ -80,6 +80,7 @@ setup_env() {
     pkg upgrade -y
     pkg install root-repo -y
     pkg install busybox -y
+    pkg install pv -y
     if is_root; then
         info "Superuser permision was granted by root provicer" 
     else 
@@ -133,9 +134,8 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if su -c "$termuxBin/tar -xf $zipPath \
-       --numeric-owner -C $archPath \
-       --checkpoint=500 --checkpoint-action=dot"; then
+    if sudo pv "$zipPath" | su -c "$termuxBin/tar --extract --gzip \
+        --numeric-owner --directory="$archPath" --file -"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
