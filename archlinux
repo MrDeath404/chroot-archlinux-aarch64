@@ -198,7 +198,7 @@ boot_arch() {
 }
 
 setup_root() {
-
+    return
 }
 
 login_arch() {
