@@ -5,19 +5,19 @@ archPath="/data/local/arch"
 scriptSleep="20"
 
 warning() {
-    echo -e "[\e[33mWARNING\e[0m] - " "$1"
+    echo -e "[\033[33mWARNING\033[0m] - " "$1"
 }
 
 success() {
-    echo -e "[\e[32mSUCCESS\e[0m] - " "$1"
+    echo -e "[\033[32mSUCCESS\033[0m] - $1"
 }
 
-info() {
-    echo -e "[\e[34mINFO\e[0m] - " "$1"
+info(){
+    echo -e "[\033[34mINFO\033[0m] - $1"
 }
 
-error() {
-    echo -e "[\e[31mERROR\e[0m] - " "$1" >&2
+error(){
+    echo -e "[\033[31mERROR\033[0m] - $1" >&2
 }
 
 is_root() {
@@ -68,7 +68,7 @@ setup_env() {
 download_zip() {
     warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic for aarch64(arm64)"
-    if su -c curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+    if sudo curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
         info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     else 
@@ -106,7 +106,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if su -c tar --extract --verbose --file=\"$zipPath\" \
+    if sudo tar --extract --verbose --file=\"$zipPath\" \
         --numeric-owner --directory=\"$archPath\" \
         --checkpoint=1 --checkpoint-action=progress ; then
         success "Archive was successfully unpacked to $archPath"
@@ -165,10 +165,10 @@ EOF
 }
 
 is_arch_booted() {
-    su -c busybox mountpoint -q "$archPath/proc" &&
-    su -c busybox mountpoint -q "$archPath/sys" &&
-    su -c busybox mountpoint -q "$archPath/dev" &&
-    su -c busybox mountpoint -q "$archPath/dev/pts"
+    sudo busybox mountpoint -q "$archPath/proc" &&
+    sudo busybox mountpoint -q "$archPath/sys" &&
+    sudo busybox mountpoint -q "$archPath/dev" &&
+    sudo busybox mountpoint -q "$archPath/dev/pts"
 }
 
 boot_arch() {
@@ -178,12 +178,12 @@ boot_arch() {
     fi
     info "Booting ArchLinux"
     {
-        su -c busybox mount -o remount,dev,suid /data
-        su -c busybox mount -o bind /dev "$archPath/dev"
-        su -c busybox mount -t proc proc "$archPath/proc"
-        su -c busybox mount -t sysfs sysfs "$archPath/sys"
-        su -c busybox mount -t devpts devpts "$archPath/dev/pts"
-        su -c busybox mount -o bind /sdcard "$archPath/media/sdcard"
+        sudo busybox mount -o remount,dev,suid /data
+        sudo busybox mount -o bind /dev "$archPath/dev"
+        sudo busybox mount -t proc proc "$archPath/proc"
+        sudo busybox mount -t sysfs sysfs "$archPath/sys"
+        sudo busybox mount -t devpts devpts "$archPath/dev/pts"
+        sudo busybox mount -o bind /sdcard "$archPath/media/sdcard"
     } || {
         error "Failed to boot ArchLinux"
         exit 1
@@ -221,17 +221,17 @@ login_arch() {
         user="root"
     fi
     info "Logging in as $user"
-    su -c busybox chroot "$archPath" /bin/su - $user
+    sudo busybox chroot "$archPath" /bin/su - $user
 }
 
 shutdown_arch() {
     info "Shutting down ArchLinux"
     {
-        su -c busybox umount -l "$archPath/media/sdcard"
-        su -c busybox umount -l "$archPath/dev/pts"
-        su -c busybox umount -l "$archPath/proc"
-        su -c busybox umount -l "$archPath/sys"
-        su -c busybox umount -l "$archPath/dev"
+        sudo busybox umount -l "$archPath/media/sdcard"
+        sudo busybox umount -l "$archPath/dev/pts"
+        sudo busybox umount -l "$archPath/proc"
+        sudo busybox umount -l "$archPath/sys"
+        sudo busybox umount -l "$archPath/dev"
     } || {
         error "Failed to shutdown ArchLinux"
         exit 1
