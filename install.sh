@@ -1,6 +1,28 @@
 #!/bin/bash
 
-messageSleep="0.35"
+messageSleep="0.75"
+
+arch_logo() {
+    printf "\e[34m                  ▄
+                 ▄█▄
+                ▄███▄
+               ▄█████▄
+              ▄███████▄
+             ▄ ▀▀██████▄
+            ▄██▄▄ ▀█████▄
+           ▄█████████████▄
+          ▄███████████████▄
+         ▄█████████████████▄
+        ▄███████████████████▄
+       ▄█████████▀▀▀▀████████▄
+      ▄████████▀      ▀███████▄
+     ▄█████████        ████▀▀██▄
+    ▄██████████        █████▄▄▄
+   ▄██████████▀        ▀█████████▄
+  ▄██████▀▀▀              ▀▀██████▄
+ ▄███▀▀                       ▀▀███▄
+▄▀▀                               ▀▀▄\e[0m\n"
+}
 
 success() {
     sleep "$messageSleep"
@@ -25,30 +47,8 @@ fi
 curl -L --progress-bar -o archlinux "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux"
 chmod +x ./archlinux
 mv ./archlinux $HOME/../usr/bin
-sleep "0.85"
 if archlinux; then
-echo -e "\033[36m
-                   -\`
-                  .o+\`
-                 \`ooo/
-                \`+oooo:
-               \`+oooooo:
-               -+oooooo+:
-             \`/:-:++oooo+:
-            \`/++++/+++++++:
-           \`/++++++++++++++:
-          \`/+++ooooooooooooo/\`
-         ./ooosssso++osssssso+\`
-        .oossssso-\`\`\`\`/ossssss+\`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   \`/ossssso+/:-        -:/+osssso+-
-  \`+sso+:-\`                 \`.-/+oso:
- \`++:.                           \`-/+/
- .\`                                 \`
-\033[0m"
-
+    arch_logo
     success "ArchLinux manager was successfully installed"
     info "You can access ArchLinux Manager \"archlinux\" anywhere in your Termux"
     info "Now you can setup enviroment by \"archlinux setup\""

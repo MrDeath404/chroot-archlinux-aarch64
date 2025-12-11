@@ -4,30 +4,28 @@ archPath="/data/local/distro/arch"
 tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
 scriptSleep="2"
-messageSleep="0.35"
+messageSleep="0.75"
 
 arch_logo() {
-    echo -e "\033[36m
-                   -\`
-                  .o+\`
-                 \`ooo/
-                \`+oooo:
-               \`+oooooo:
-               -+oooooo+:
-             \`/:-:++oooo+:
-            \`/++++/+++++++:
-           \`/++++++++++++++:
-          \`/+++ooooooooooooo/\`
-         ./ooosssso++osssssso+\`
-        .oossssso-\`\`\`\`/ossssss+\`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   \`/ossssso+/:-        -:/+osssso+-
-  \`+sso+:-\`                 \`.-/+oso:
- \`++:.                           \`-/+/
- .\`                                 \`
-\033[0m"
+    printf "\e[34m                  ▄
+                 ▄█▄
+                ▄███▄
+               ▄█████▄
+              ▄███████▄
+             ▄ ▀▀██████▄
+            ▄██▄▄ ▀█████▄
+           ▄█████████████▄
+          ▄███████████████▄
+         ▄█████████████████▄
+        ▄███████████████████▄
+       ▄█████████▀▀▀▀████████▄
+      ▄████████▀      ▀███████▄
+     ▄█████████        ████▀▀██▄
+    ▄██████████        █████▄▄▄
+   ▄██████████▀        ▀█████████▄
+  ▄██████▀▀▀              ▀▀██████▄
+ ▄███▀▀                       ▀▀███▄
+▄▀▀                               ▀▀▄\e[0m\n"
 }
 
 warning() {
