@@ -133,9 +133,9 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/tar" --extract --verbose --file=\"$zipPath\" \
-        --numeric-owner --directory=\"$archPath\" \
-        --checkpoint=1 --checkpoint-action=progress ; then
+    if sudo "$termuxBin/tar" --extract --verbose --file="$zipPath" \
+       --numeric-owner --directory="$archPath" \
+       --checkpoint=1000 --checkpoint-action=dot; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
@@ -197,6 +197,10 @@ boot_arch() {
     success "ArchLinux booted and it's ready to use"
 }
 
+setup_root() {
+
+}
+
 login_arch() {
     if !is_arch_booted; then
         boot_arch
@@ -204,6 +208,9 @@ login_arch() {
     user="$1"
     if [ -z "$user" ]; then
         user="root"
+    fi
+    if [ "$user" == "setup" ]; then
+        setup_root
     fi
     info "Logging in as $user"
     sudo "$termuxBin/busybox" chroot "$archPath" /bin/su - $user
@@ -249,7 +256,7 @@ reinstall_arch() {
 }
 
 clean_zip() {
-    info "Removing ArchLinux Generic ZIP"
+    info "Removing ArchLinux Generic ZIP from $tmpPath"
     if su -c rm -rf "$tmpPath"; then
         success "ArchLinux Generic ZIP was successfully removed"
     else
