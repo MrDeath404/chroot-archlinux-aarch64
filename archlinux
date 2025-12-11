@@ -164,7 +164,7 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8888
 nameserver 2001:4860:4860::8844
 EOF
-        mv -vf "$tmpPath/resolv.conf" "$archPath/etc"
+        su -c mv -vf "$tmpPath/resolv.conf" "$archPath/etc"
     } || {
         error "Failed to perform additional steps"
         exit 1
