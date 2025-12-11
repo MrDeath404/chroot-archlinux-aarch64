@@ -206,7 +206,7 @@ boot_arch() {
 
 setup_root() {
     info "Setting up root account and updating your ArchLinux"
-    if su -c "$termuxBin/busybox" chroot "$archPath" sh - $user -c \
+    if su -c "$termuxBin/busybox" chroot "$archPath" sh - root -c \
     "( groupadd -g 3003 aid_inet &&
         groupadd wheel &&
         usermod -G 3003 -a root &&
