@@ -84,7 +84,6 @@ setup_env() {
         pkg upgrade -y
         pkg install root-repo -y
         pkg install busybox -y
-        pkg install bsdtar -y
     } || error "Failed to install some packages"
     success "Packages were successfully installed"
     if is_root; then
@@ -139,7 +138,13 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/bsdtar" -xpf "$zipPath" -C "$archPath"; then
+    if sudo "$termuxBin/tar" \
+        --extract \
+        --gzip \
+        --file="$zipPath" \
+        --no-same-owner \
+        --no-same-permissions \
+        --directory="$archPath" ; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
