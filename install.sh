@@ -19,6 +19,29 @@ chmod +x ./archlinux
 mv ./archlinux $HOME/../usr/bin
 
 if archlinux; then
+    cat << "EOF"
+\033[36m
+                   -`
+                  .o+`
+                 `ooo/
+                `+oooo:
+               `+oooooo:
+               -+oooooo+:
+             `/:-:++oooo+:
+            `/++++/+++++++:
+           `/++++++++++++++:
+          `/+++ooooooooooooo/`
+         ./ooosssso++osssssso+`
+        .oossssso-````/ossssss+`
+       -osssssso.      :ssssssso.
+      :osssssss/        osssso+++.
+     /ossssssss/        +ssssooo/-
+   `/ossssso+/:-        -:/+osssso+-
+  `+sso+:-`                 `.-/+oso:
+ `++:.                           `-/+/
+ .`                                 `
+\033[0m
+EOF
     success "ArchLinux manager was successfully installed"
     info "You can access ArchLinux Manager \"archlinux\" anywhere in your Termux"
     info "Now you can setup enviroment by \"archlinux setup\""
