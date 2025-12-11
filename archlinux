@@ -247,7 +247,7 @@ login_arch() {
 }
 
 shutdown_arch() {
-    if !is_arch_booted; then
+    if ! is_arch_booted; then
         warning "ArchLinux is already shutdown"
         exit 0
     fi
