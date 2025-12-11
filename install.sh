@@ -17,10 +17,10 @@ info "Installing ArchLinux manager for Termux"
 if [ -f "./archlinux" ]; then
     rm -f "./archlinux"
 fi
-curl -L -o archlinux "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux"
+curl -L --progress-bar -o archlinux "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux"
 chmod +x ./archlinux
 mv ./archlinux $HOME/../usr/bin
-
+sleep "1s"
 if archlinux; then
 echo -e "\033[36m
                    -\`
