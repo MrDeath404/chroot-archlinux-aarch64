@@ -1,15 +1,15 @@
 #!/bin/bash
 
 success() {
-    printf "[\033[32mSUCCESS\033[0m] - %s\n" "$1"
+    printf "[\e[32mSUCCESS\e[0m] - %s\n" "$1"
 }
 
 info() {
-    printf "[\033[34mINFO\033[0m] - %s\n" "$1"
+    printf "[\e[34mINFO\e[0m] - %s\n" "$1"
 }
 
 error() {
-    printf "[\033[31mERROR\033[0m] - %s\n" "$1" >&2
+    printf "[\e[31mERROR\e[0m] - %s\n" "$1" >&2
 }
 
 clear
