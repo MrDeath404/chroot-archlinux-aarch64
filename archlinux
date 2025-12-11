@@ -207,8 +207,7 @@ boot_arch() {
 setup_root() {
     info "Setting up root account and updating your ArchLinux"
     if su -c "$termuxBin/busybox" chroot "$archPath" sh - $user -c \
-    "(
-        groupadd -g 3003 aid_inet &&
+    "( groupadd -g 3003 aid_inet &&
         groupadd wheel &&
         usermod -G 3003 -a root &&
         sed -i "s/^# \*%wheel ALL=\(ALL:ALL\) ALL/%wheel ALL=\(ALL:ALL\) ALL/" /etc/su -cers &&
@@ -220,8 +219,7 @@ setup_root() {
         pacman-key --refresh-keys &&
         pacman -Syu --noconfirm &&
         pacman -S --noconfirm su -c &&
-        exit 0
-    ) || exit 1"; then
+        exit 0\) || exit 1"; then
         success "ArchLinux is now ready to use. You can login with \"archlinux login\""
     else
         error "Failed to setup ArchLinux enviroment"
