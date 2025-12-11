@@ -1,5 +1,5 @@
 # Install guide
-- Install [Termux APP](https://github.com/termux/termux-app/releases/latest) and [Termux API](https://github.com/termux/termux-api/releases/latest) from here
+- Install [Termux App](https://github.com/termux/termux-app/releases/latest) and [Termux API](https://github.com/termux/termux-api/releases/latest) from here
 - Install ArchLinux manager and follow terminal instructions
 
 # Install/Update ArchLinux manager with
