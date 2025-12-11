@@ -142,7 +142,7 @@ install_arch() {
         su -c rm -rf "$archPath"
         exit 1
     fi
-    info "Performing additional steps to set up Arch Linux"
+    info "Performing additional steps to set up ArchLinux"
     {
         su -c mkdir -p "$archPath/media/sdcard"
         cat << "EOF" | su -c "tee '$archPath/etc/resolv.conf' >/dev/null"
@@ -198,7 +198,7 @@ boot_arch() {
 }
 
 setup_root() {
-    return
+    info "Setting up root account and updating your ArchLinux"
 }
 
 login_arch() {
