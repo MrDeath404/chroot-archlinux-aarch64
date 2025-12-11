@@ -174,10 +174,12 @@ EOF
 }
 
 is_arch_booted() {
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
+    {
+        sudo "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
+        sudo "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
+        sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
+        sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
+    } > /dev/null 2>&1
 }
 
 boot_arch() {
@@ -206,9 +208,8 @@ setup_root() {
     info "Setting up root account and updating your ArchLinux"
     if sudo "$termuxBin/busybox" chroot "$archPath" /bin/su - $user -c \
     "(
-        groupadd -g 3003 aid_inet ||
-        true &&
-        groupadd wheel || true &&
+        groupadd -g 3003 aid_inet &&
+        groupadd wheel &&
         usermod -G 3003 -a root &&
         sed -i "s/^# \*%wheel ALL=\(ALL:ALL\) ALL/%wheel ALL=\(ALL:ALL\) ALL/" /etc/sudoers &&
         sed -i "s/^#\\\(en_US\.UTF-8 UTF-8\\\)/\\1/" /etc/locale.gen &&
@@ -246,6 +247,10 @@ login_arch() {
 }
 
 shutdown_arch() {
+    if !is_arch_booted; then
+        warning "ArchLinux is already shutdown"
+        exit 0
+    fi
     arch_logo
     info "Shutting down ArchLinux"
     {
