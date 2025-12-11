@@ -1,14 +1,19 @@
 #!/bin/bash
 
+messageSleep="0.05"
+
 success() {
+    sleep "$messageSleep"
     printf "[\e[32mSUCCESS\e[0m] - %s\n" "$1"
 }
 
 info() {
+    sleep "$messageSleep"
     printf "[\e[34mINFO\e[0m] - %s\n" "$1"
 }
 
 error() {
+    sleep "$messageSleep"
     printf "[\e[31mERROR\e[0m] - %s\n" "$1" >&2
 }
 

@@ -1,9 +1,10 @@
 #!/bin/bash
 
-tmpPath="/data/local/distro/tmp"
 archPath="/data/local/distro/arch"
-scriptSleep="5s"
+tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
+scriptSleep="2"
+messageSleep="0.05"
 
 arch_logo() {
     echo -e "\033[36m
@@ -30,18 +31,22 @@ arch_logo() {
 }
 
 warning() {
+    sleep "$messageSleep"
     printf "[\e[33mWARNING\e[0m] - %s\n" "$1"
 }
 
 success() {
+    sleep "$messageSleep"
     printf "[\e[32mSUCCESS\e[0m] - %s\n" "$1"
 }
 
 info() {
+    sleep "$messageSleep"
     printf "[\e[34mINFO\e[0m] - %s\n" "$1"
 }
 
 error() {
+    sleep "$messageSleep"
     printf "[\e[31mERROR\e[0m] - %s\n" "$1" >&2
 }
 
