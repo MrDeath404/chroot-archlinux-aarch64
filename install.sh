@@ -1,6 +1,6 @@
 #!/bin/bash
 
-messageSleep="0.1"
+messageSleep="0.2"
 
 arch_logo() {
     printf "\e[36m                  ▄

@@ -3,8 +3,8 @@
 archPath="/data/local/distro/arch"
 tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
-scriptSleep="2"
-messageSleep="0.1"
+scriptSleep="1"
+messageSleep="0.2"
 
 arch_logo() {
     printf "\e[36m                  ▄
@@ -97,7 +97,6 @@ setup_env() {
 
 download_zip() {
     local zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
-    warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic ZIP for aarch64(arm64)"
     if su -c curl -L --progress-bar -o "$zipPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
@@ -112,7 +111,7 @@ download_zip() {
 redownload_zip() {
     su -c rm -rf "$tmpPath"
     su -c mkdir -p "$tmpPath"
-    echo $(download_zip)
+    download_zip
 }
 
 install_arch() {
@@ -135,16 +134,19 @@ install_arch() {
         info "ArchLinux Generic ZIP was found at $tmpPath"
         info "If you want to redownload it use \"redownload\" option"
     else
+        warning "ArchLinux zip was not found"
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/pv $zipPath | $termuxBin/bsdtar -xpf - -C '$archPath' 2>/dev/null"; then
+    set -o pipefail
+    if sudo "$termuxBin/pv" "$zipPath" | sudo "$termuxBin/bsdtar" -xpf - -C "$archPath" 2>/dev/null; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
         su -c rm -rf "$archPath"
         exit 1
     fi
+    set +o pipefail
     info "Performing additional steps to set up ArchLinux"
     {
         su -c mkdir -p "$archPath/media/sdcard"
