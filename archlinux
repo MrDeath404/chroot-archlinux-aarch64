@@ -135,8 +135,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/pv $zipPath" | \
-       sudo "$termuxBin/bsdtar -xpf - -C '$archPath' 2>/dev/null"; then
+    if sudo "$termuxBin/pv $zipPath | $termuxBin/bsdtar -xpf - -C '$archPath' 2>/dev/null"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive"
@@ -235,7 +234,7 @@ shutdown_arch() {
 reboot_arch() {
     shutdown_arch
     sleep "$scriptSleep"
-    clear
+    clear  
     boot_arch
 }
 
@@ -252,7 +251,7 @@ remove_arch() {
 reinstall_arch() {
     remove_arch
     sleep "$scriptSleep"
-    clear
+    clear  
     install_arch
 }
 
