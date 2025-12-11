@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/su
 
 tmpPath="/data/local/tmp"
 archPath="/data/local/arch"
@@ -68,7 +68,7 @@ setup_env() {
 download_zip() {
     warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic for aarch64(arm64)"
-    if sudo curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+    if curl -L --progress-bar -o "$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
         info "File is located at $tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     else 
@@ -78,8 +78,8 @@ download_zip() {
 }
 
 redownload_zip() {
-    sudo rm -rf "$tmpPath"
-    sudo mkdir -p "$tmpPath"
+    rm -rf "$tmpPath"
+    mkdir -p "$tmpPath"
     echo $(download_zip)
 }
 
@@ -89,32 +89,33 @@ install_arch() {
     if [ -z "$zipPath" ]; then
         zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     fi
-    info "Installing ArchLinux"
-    if [ -d "$archPath" ]; then
-        info "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
+    if test -d "$archPath"; then
+        warning "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
         exit 0
+    else
+        info "Creating ArchLinux container at $archPath"
+        mkdir -p "$archPath"
+    if ! test -d "$tmpPath"; then
+        mkdir -p "$tmpPath"
     fi
-    if ! sudo test -d "$tmpPath"; then
-        sudo mkdir -p "$tmpPath"
-    fi
-    if sudo test -d "$zipPath"; then
+    if test -f "$zipPath"; then
         info "ArchLinux Generic ZIP was found at $tmpPath"
         info "If you want to redownload it use \"redownload\" option"
     else
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
+    if tar xvf "$zipPath" --numeric-owner -C "$archPath"; then
         success "Archive was successfully unpacked to $archPath"
     else
         error "Failed to unpack archive. It may have been corrupted during download."
-        sudo rm -rf "$zipPath"
-        sudo rm -rf "$archPath"
+        rm -rf "$zipPath"
+        rm -rf "$archPath"
         exit 1
     fi
     info "Performing additional steps to set up Arch Linux"
-    sudo mkdir -p "$archPath/media/sdcard"
-    sudo cat > "$archPath/etc/resolv.conf" <<EOF
+    mkdir -p "$archPath/media/sdcard"
+    cat > "$archPath/etc/resolv.conf" <<EOF
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 nameserver 2606:4700:4700::1111
@@ -124,12 +125,12 @@ nameserver 8.8.4.4
 nameserver 2001:4860:4860::8888
 nameserver 2001:4860:4860::8844
 EOF
-    sudo cat > "$archPath/root/reset-pacman.sh" <<EOF
+    cat > "$archPath/root/reset-pacman.sh" <<EOF
 #!/bin/sh
 pacman-key --init
 pacman-key --populate archlinuxarm
 EOF
-    sudo chmod +x "$archPath/root/reset-pacman.sh"
+    chmod +x "$archPath/root/reset-pacman.sh"
 }
 
 is_arch_booted() {
@@ -212,7 +213,7 @@ reboot_arch() {
 
 uninstall_arch() {
     info "Uninstalling ArchLinux"
-    if sudo rm -rf "$archPath"; then
+    if rm -rf "$archPath"; then
         success "ArchLinux has been uninstalled"
     else 
         error "Failed to uninstall ArchLinux"
@@ -227,7 +228,7 @@ reinstall_arch() {
 
 clean_zip() {
     info "Removing ArchLinux Generic ZIP"
-    if sudo rm -rf "$tmpPath"; then
+    if rm -rf "$tmpPath"; then
         success "ArchLinux Generic ZIP was successfully removed"
     else
         error "Failed to remove ArchLinux Generic ZIP"
