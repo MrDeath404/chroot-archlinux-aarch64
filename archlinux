@@ -138,7 +138,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo "$termuxBin/tar" \
+    if su -c "$termuxBin/tar" \
         --extract \
         --gzip \
         --file="$zipPath" \
@@ -175,10 +175,10 @@ EOF
 
 is_arch_booted() {
     {
-        sudo "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
-        sudo "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
-        sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
-        sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
+        su -c "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
+        su -c "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
+        su -c "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
+        su -c "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
     } > /dev/null 2>&1
 }
 
@@ -190,13 +190,13 @@ boot_arch() {
     fi
     info "Booting ArchLinux"
     {
-        sudo "$termuxBin/busybox" mount -o remount,dev,suid /data
-        sudo mount -o bind /dev "$archPath/dev"
-        sudo "$termuxBin/busybox" mount -t proc proc "$archPath/proc"
-        sudo "$termuxBin/busybox" mount -t sysfs sysfs "$archPath/sys"
-        sudo "$termuxBin/busybox" mount -t devpts devpts "$archPath/dev/pts"
-        sudo "$termuxBin/busybox" mount -o bind /sdcard "$archPath/media/sdcard"
-        sudo "$termuxBin/busybox" mount -t tmpfs /cache "$archPath/var/cache"
+        su -c "$termuxBin/busybox" mount -o remount,dev,suid /data
+        su -c mount -o bind /dev "$archPath/dev"
+        su -c "$termuxBin/busybox" mount -t proc proc "$archPath/proc"
+        su -c "$termuxBin/busybox" mount -t sysfs sysfs "$archPath/sys"
+        su -c "$termuxBin/busybox" mount -t devpts devpts "$archPath/dev/pts"
+        su -c "$termuxBin/busybox" mount -o bind /sdcard "$archPath/media/sdcard"
+        su -c "$termuxBin/busybox" mount -t tmpfs /cache "$archPath/var/cache"
     } || {
         error "Failed to boot ArchLinux"
         exit 1
@@ -206,12 +206,12 @@ boot_arch() {
 
 setup_root() {
     info "Setting up root account and updating your ArchLinux"
-    if sudo "$termuxBin/busybox" chroot "$archPath" sh - $user -c \
+    if su -c "$termuxBin/busybox" chroot "$archPath" sh - $user -c \
     "(
         groupadd -g 3003 aid_inet &&
         groupadd wheel &&
         usermod -G 3003 -a root &&
-        sed -i "s/^# \*%wheel ALL=\(ALL:ALL\) ALL/%wheel ALL=\(ALL:ALL\) ALL/" /etc/sudoers &&
+        sed -i "s/^# \*%wheel ALL=\(ALL:ALL\) ALL/%wheel ALL=\(ALL:ALL\) ALL/" /etc/su -cers &&
         sed -i "s/^#\\\(en_US\.UTF-8 UTF-8\\\)/\\1/" /etc/locale.gen &&
         echo "LANG=en_US.UTF-8" > /etc/locale.conf &&
         locale-gen &&
@@ -219,7 +219,7 @@ setup_root() {
         pacman-key --populate archlinuxarm &&
         pacman-key --refresh-keys &&
         pacman -Syu --noconfirm &&
-        pacman -S --noconfirm sudo &&
+        pacman -S --noconfirm su -c &&
         exit 0
     ) || exit 1"; then
         success "ArchLinux is now ready to use. You can login with \"archlinux login\""
@@ -243,7 +243,7 @@ login_arch() {
         setup_root
     fi
     info "Logging in as $user"
-    sudo "$termuxBin/busybox" chroot "$archPath" /bin/sh - $user
+    su -c "$termuxBin/busybox" chroot "$archPath" /bin/sh - $user
 }
 
 shutdown_arch() {
@@ -254,11 +254,11 @@ shutdown_arch() {
     arch_logo
     info "Shutting down ArchLinux"
     {
-        sudo "$termuxBin/busybox" umount -l "$archPath/media/sdcard"
-        sudo "$termuxBin/busybox" umount -l "$archPath/dev/pts"
-        sudo "$termuxBin/busybox" umount -l "$archPath/proc"
-        sudo "$termuxBin/busybox" umount -l "$archPath/sys"
-        sudo "$termuxBin/busybox" umount -l "$archPath/dev"
+        su -c "$termuxBin/busybox" umount -l "$archPath/media/sdcard"
+        su -c "$termuxBin/busybox" umount -l "$archPath/dev/pts"
+        su -c "$termuxBin/busybox" umount -l "$archPath/proc"
+        su -c "$termuxBin/busybox" umount -l "$archPath/sys"
+        su -c "$termuxBin/busybox" umount -l "$archPath/dev"
     } || {
         error "Failed to shutdown ArchLinux"
         exit 1
