@@ -2,7 +2,7 @@
 
 tmpPath="/data/local/distro/tmp"
 archPath="/data/local/distro/arch"
-scriptSleep="10s"
+scriptSleep="5s"
 
 warning() {
     printf "[\e[33mWARNING\e[0m] - %s\n" "$1"
@@ -248,7 +248,7 @@ reboot_arch() {
     boot_arch
 }
 
-uninstall_arch() {
+remove_arch() {
     info "Uninstalling ArchLinux"
     if su -c rm -rf "$archPath"; then
         success "ArchLinux has been uninstalled"
@@ -259,7 +259,7 @@ uninstall_arch() {
 }
 
 reinstall_arch() {
-    uninstall_arch
+    remove_arch
     sleep "$(scriptSleep)"
     clear
     install_arch
@@ -276,7 +276,7 @@ clean_zip() {
 }
 
 help() {
-    info "Usage: archlinux {install [zip_path] | uninstall | reinstall | login <user> | boot | reboot | shutdown | redownload | clean | help}"
+    info "Usage: archlinux {install [zip_path] | remove | reinstall | login <user> | boot | reboot | shutdown | redownload | clean | help}"
 }
 
 if [ "$#" -eq 0 ]; then
@@ -290,7 +290,7 @@ while [ "$#" -gt 0 ]; do
             setup_env
             shift
             ;;
-        install)
+        remove)
             clear
             zipPath=$(get_arg_no_check "$2" "$1")
             install_arch $zipPath
