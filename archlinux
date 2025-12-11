@@ -95,7 +95,7 @@ download_zip() {
     local zipPath="$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz"
     warning "ArchLinux zip was not found"
     info "Downloading ArchLinux Generic ZIP for aarch64(arm64)"
-    if sudo curl -L --progress-bar -o "$zipPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
+    if su -c curl -L --progress-bar -o "$zipPath" "http://os.archlinuxarm.org/os/ArchLinuxARM-aarch64-latest.tar.gz"; then
         success "ArchLinux Generic ZIP was downloaded successfully"
         info "File is located at $zipPath"
     else 
@@ -134,7 +134,7 @@ install_arch() {
         download_zip
     fi
     info "Unpacking ArchLinux Generic ZIP at $archPath"
-    if sudo pv "$zipPath" | sudo "$termuxBin/tar" --extract --gzip \
+    if su -c "$termuxBin/pv" "$zipPath" | su -c "$termuxBin/tar" --extract --gzip \
         --numeric-owner --directory="$archPath" --file -; then
         success "Archive was successfully unpacked to $archPath"
     else
@@ -170,10 +170,10 @@ EOF
 }
 
 is_arch_booted() {
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
-    sudo "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
+    su -c "$termuxBin/busybox" mountpoint -q "$archPath/proc" &&
+    su -c "$termuxBin/busybox" mountpoint -q "$archPath/sys" &&
+    su -c "$termuxBin/busybox" mountpoint -q "$archPath/dev" &&
+    su -c "$termuxBin/busybox" mountpoint -q "$archPath/dev/pts"
 }
 
 boot_arch() {
@@ -184,12 +184,12 @@ boot_arch() {
     arch_logo
     info "Booting ArchLinux"
     {
-        sudo "$termuxBin/busybox" mount -o remount,dev,suid /data
-        sudo "$termuxBin/busybox" mount -o bind /dev "$archPath/dev"
-        sudo "$termuxBin/busybox" mount -t proc proc "$archPath/proc"
-        sudo "$termuxBin/busybox" mount -t sysfs sysfs "$archPath/sys"
-        sudo "$termuxBin/busybox" mount -t devpts devpts "$archPath/dev/pts"
-        sudo "$termuxBin/busybox" mount -o bind /sdcard "$archPath/media/sdcard"
+        su -c "$termuxBin/busybox" mount -o remount,dev,suid /data
+        su -c "$termuxBin/busybox" mount -o bind /dev "$archPath/dev"
+        su -c "$termuxBin/busybox" mount -t proc proc "$archPath/proc"
+        su -c "$termuxBin/busybox" mount -t sysfs sysfs "$archPath/sys"
+        su -c "$termuxBin/busybox" mount -t devpts devpts "$archPath/dev/pts"
+        su -c "$termuxBin/busybox" mount -o bind /sdcard "$archPath/media/sdcard"
     } || {
         error "Failed to boot ArchLinux"
         exit 1
@@ -213,17 +213,17 @@ login_arch() {
         setup_root
     fi
     info "Logging in as $user"
-    sudo "$termuxBin/busybox" chroot "$archPath" /bin/su - $user
+    su -c "$termuxBin/busybox" chroot "$archPath" /bin/su - $user
 }
 
 shutdown_arch() {
     info "Shutting down ArchLinux"
     {
-        sudo "$termuxBin/busybox" umount -l "$archPath/media/sdcard"
-        sudo "$termuxBin/busybox" umount -l "$archPath/dev/pts"
-        sudo "$termuxBin/busybox" umount -l "$archPath/proc"
-        sudo "$termuxBin/busybox" umount -l "$archPath/sys"
-        sudo "$termuxBin/busybox" umount -l "$archPath/dev"
+        su -c "$termuxBin/busybox" umount -l "$archPath/media/sdcard"
+        su -c "$termuxBin/busybox" umount -l "$archPath/dev/pts"
+        su -c "$termuxBin/busybox" umount -l "$archPath/proc"
+        su -c "$termuxBin/busybox" umount -l "$archPath/sys"
+        su -c "$termuxBin/busybox" umount -l "$archPath/dev"
     } || {
         error "Failed to shutdown ArchLinux"
         exit 1
