@@ -3,6 +3,7 @@
 messageSleep="0.75"
 
 arch_logo() {
+    sleep "$messageSleep"
     printf "\e[34m                  ▄
                  ▄█▄
                 ▄███▄
