@@ -1,6 +1,6 @@
 #!/bin/bash
 
-messageSleep="0.55"
+messageSleep="0.35"
 
 arch_logo() {
     sleep "$messageSleep"
