@@ -290,7 +290,7 @@ while [ "$#" -gt 0 ]; do
             setup_env
             shift
             ;;
-        remove)
+        install)
             clear
             zipPath=$(get_arg_no_check "$2" "$1")
             install_arch $zipPath
@@ -298,6 +298,11 @@ while [ "$#" -gt 0 ]; do
             if [ -n $zipPath ]; then
                 shift
             fi
+            ;;
+        remove)
+            clear
+            remove_arch
+            shift
             ;;
         reinstall)
             clear
