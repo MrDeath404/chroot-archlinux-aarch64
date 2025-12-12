@@ -42,6 +42,7 @@ error() {
 }
 
 clear
+arch_logo
 info "Installing ArchLinux manager for Termux"
 
 if [ -f "$managerPath/archlinux-manager.sh" ]; then
@@ -59,7 +60,6 @@ fi
     mkdir -p "$managerPath"
     curl -L --progress-bar -o "$managerPath/archlinux-manager.sh" "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux-manager.sh"
     chmod +x "$managerPath/archlinux-manager.sh"
-    archlinux
 ) || {
     error "Failed to install manager. Try again"
     exit 1
