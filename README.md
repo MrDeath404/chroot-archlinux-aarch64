@@ -11,3 +11,5 @@ bash <(curl -s https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aar
 - Your device is rooted with [Magisk](https://github.com/topjohnwu/Magisk) or Any [KernelSU](https://github.com/tiann/KernelSU) based root provider
 - You are able to mount partitions as read/write
 - You running system builded in user debug/eng mode
+
+# Status: NOT READY DO NOT USE UNTIL YOU SEE COMMIT "init version 1.0"
