@@ -3,7 +3,6 @@
 archPath="/data/local/distro/arch"
 tmpPath="/data/local/distro/tmp"
 termuxBin="/data/data/com.termux/files/usr/bin"
-scriptSleep="1"
 messageSleep="0.2"
 
 arch_logo() {
@@ -25,7 +24,7 @@ arch_logo() {
    ▄██████████▀        ▀█████████▄
   ▄██████▀▀▀              ▀▀██████▄
  ▄███▀▀                       ▀▀███▄
-▄▀▀                               ▀▀▄\e[0m\n"
+▄▀▀                               ▀▀▄\e[0m\n\n"
 }
 
 warning() {

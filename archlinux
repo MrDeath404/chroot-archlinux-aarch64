@@ -1,0 +1,191 @@
+#!/bin/bash
+
+messageSleep="0.2"
+renderSleep="0.1"
+
+archPath="/data/local/container/arch"
+tmpPath="/data/local/container/tmp"
+managerPath="$HOME/.archlinux-manager"
+
+arch_logo() {
+    printf "\e[36m                  ▄
+                 ▄█▄
+                ▄███▄
+               ▄█████▄
+              ▄███████▄
+             ▄ ▀▀██████▄
+            ▄██▄▄ ▀█████▄
+           ▄█████████████▄
+          ▄███████████████▄
+         ▄█████████████████▄
+        ▄███████████████████▄
+       ▄█████████▀▀▀▀████████▄
+      ▄████████▀      ▀███████▄
+     ▄█████████        ████▀▀██▄
+    ▄██████████        █████▄▄▄
+   ▄██████████▀        ▀█████████▄
+  ▄██████▀▀▀              ▀▀██████▄
+ ▄███▀▀                       ▀▀███▄
+▄▀▀                               ▀▀▄\e[0m\n\n"
+}
+
+warning() {
+    sleep "$messageSleep"
+    printf "[\e[0;33mWARNING\e[0m] - %s\n" "$1"
+}
+
+success() {
+    sleep "$messageSleep"
+    printf "[\e[0;32mSUCCESS\e[0m] - %s\n" "$1"
+}
+
+info() {
+    sleep "$messageSleep"
+    printf "[\e[0;34mINFO\e[0m] - %s\n" "$1"
+}
+
+error() {
+    sleep "$messageSleep"
+    printf "[\e[0;31mERROR\e[0m] - %s\n" "$1" >&2
+}
+
+good_option() {
+    sleep "$messageSleep"
+    [ "$2" == "1" ] && local color="34" || local color="37"
+    printf "\e[0;%sm%s\e[0m\n" "$1"
+}
+
+bad_option() {
+    sleep "$messageSleep"
+    [ "$2" == "1" ] && local color="31" || local color="37"
+    printf "\e[0;%sm%s\e[0m\n" "$1"
+}
+
+get_arg_no_check() {
+    local arg="$1"
+    local argName="$2"
+
+    if [[ -z "$arg" || "$arg" =~ ^-- ]]; then
+        echo ""
+        return
+    fi
+    echo "$arg"
+}
+
+is_root() {
+    if ! su -c test -f "/bin/su"; then
+        return 2
+    fi
+    if su -c "exit" > /dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+setup_enviroment() {
+    info "Installing needed packages"
+    (
+        set -e
+        pkg update
+        pkg upgrade -y
+        pkg install root-repo -y
+        pkg install busybox -y
+    ) || {
+        error "Failed to install some packages"
+        exit 1
+    }
+    success "Packages were successfully installed"
+}
+
+detect_input() {
+    read -rsn1 key 2>/dev/null || return 0
+    [ "$key" = "" ] && return 1
+    if [ "$key" = $'\e' ]; then
+        read -rsn2 next 2>/dev/null || return 0
+        [ "$key$next" = $'\e[A' ] && return 2
+        [ "$key$next" = $'\e[B' ] && return 3
+    fi
+}
+
+render_menu() {
+    local selected=1
+    local input="0"
+    while true; do
+        clear
+        arch_logo
+        good_option "Manage" 1
+        good_option "Login" 2
+        good_option "Shutdown" 3
+        good_option "Install" 4
+        bad_option "Uninstall" 5
+        bad_option "Reinstall" 6
+        bad_option "Remove All Files" 7
+        bad_option "Remove ZIP" 8
+        while true; do
+            input=$(detect_input)
+            sleep "$renderSleep"
+        done
+        case "$input" in
+            1)
+                case "$selected" in
+                    1)
+
+                    ;;
+                    2)
+
+                    ;;
+                    3)
+
+                    ;;
+                    4)
+
+                    ;;
+                    5)
+
+                    ;;
+                    6)
+
+                    ;;
+                    7)
+
+                    ;;
+                    8)
+
+                    ;;
+                esac
+            ;;
+            2)
+                selected=$((selected + 1))
+                [ $selected -gt 8 ] && selected=8
+            ;;
+            3)
+                selected=$((selected - 1))
+                [ $selected -lt 1 ] && selected=1
+            ;;
+        esac
+    done
+}
+
+case "$(is_root)" in
+    1)
+        error "Can't not acceess superuser permission"
+        info "Root your device with magisk or kernelsu based root provider and grant superuser permission"
+        exit 1
+    ;;
+    2)
+        error "Can't not find /bin/su"
+        info "Your root provider does not support /bin/su"
+        exit 1
+    ;;
+esac
+
+if [ ! -f "$managerPath/setup" ]; then
+    touch "$managerPath/setup"
+fi
+
+if [ "$(cat $managerPath/setup)" != "done" ]; then
+    setup_enviroment
+    echo "done" > "$managerPath/setup"
+fi
+
+render_menu

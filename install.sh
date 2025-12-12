@@ -23,7 +23,7 @@ arch_logo() {
    ▄██████████▀        ▀█████████▄
   ▄██████▀▀▀              ▀▀██████▄
  ▄███▀▀                       ▀▀███▄
-▄▀▀                               ▀▀▄\e[0m\n"
+▄▀▀                               ▀▀▄\e[0m\n\n"
 }
 
 success() {
@@ -43,12 +43,15 @@ error() {
 
 clear
 info "Installing ArchLinux manager for Termux"
+
 if [ -f "$managerPath/archlinux-manager.sh" ]; then
     rm -f "$managerPath/archlinux-manager.sh"
 fi
+
 if [ -f "$termuxBin/archlinux" ]; then
     rm -f "$termuxBin/archlinux"
 fi
+
 (
     set -e
     curl -L --progress-bar -o "$termuxBin/archlinux" "https://raw.githubusercontent.com/MrDeath404/chroot-archlinux-aarch64/main/archlinux"
@@ -61,6 +64,7 @@ fi
     error "Failed to install manager. Try again"
     exit 1
 }
+
 success "ArchLinux manager was successfully installed"
 info "You can access ArchLinux Manager \"archlinux\" anywhere in your Termux"
 info "Now you can setup enviroment by \"archlinux setup\""
