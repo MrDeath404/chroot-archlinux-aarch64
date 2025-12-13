@@ -104,10 +104,10 @@ verify_root_access() {
                     ln -s /system/bin/sh /system/bin/su
                     mount -o remount,ro /system
                 )" > /dev/null 2>&1 || {
-                    error "Can't create link"
+                    error "Cannot create link"
                     info "Please change your root provider or download and install /bin/su"
+                    warning "You might also run user build system which is not supported"
                     if [ $attempts -eq 2 ]; then
-                        warning "You might also run user build system which is not supported"
                         exit 1
                     fi
                 }
