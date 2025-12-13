@@ -67,4 +67,3 @@ fi
 
 success "ArchLinux manager was successfully installed"
 info "You can access ArchLinux Manager \"archlinux\" anywhere in your Termux"
-info "Now you can setup enviroment by \"archlinux setup\""

@@ -85,6 +85,41 @@ is_root() {
     return 0
 }
 
+verify_root_access() {
+    local attempts=1
+    while (( attempts <= 2 )); do
+        case "$(is_root)" in
+            1)
+                error "Can't not acceess superuser permission"
+                info "Root your device with magisk or kernelsu based root provider and grant superuser permission"
+                exit 1
+            ;;
+            2)
+                error "Can't not find /bin/su"
+                warning "Your root provider does not support /bin/su"
+                info "Trying to create link between /bin/su -> /bin/sh"
+                su -c "(
+                    set -e
+                    mount -o remount,rw /system
+                    ln -sf /system/bin/sh /system/bin/su
+                    mount -o remount,ro /system || true
+                )" > /dev/null 2>&1 || {
+                    if [ $attempts -eq 2 ]; then
+                        error "Can't create link"
+                        warning "You might also run user build system which is not supported"
+                    else
+                        error "Can't create link"
+                    fi
+                    info "Please change your root provider or download and install /bin/su"
+                    exit 1
+                }
+                success "Link bettween /bin/su -> /bin/sh was successfully created"
+            ;;
+        esac
+        attempts=$((attempts + 1))
+    done
+}
+
 setup_enviroment() {
     info "Installing needed packages"
     (
@@ -93,11 +128,24 @@ setup_enviroment() {
         pkg upgrade -y
         pkg install root-repo -y
         pkg install busybox -y
+        pkg install tar -y
     ) || {
         error "Failed to install some packages"
         exit 1
     }
     success "Packages were successfully installed"
+}
+
+is_enviroment_setup() {
+    (
+        set -e
+        pkg list-installed | grep "busybox"
+        pkg list-installed | grep "tar"
+        pkg list-installed | grep "root-repo"
+    ) > /dev/null 2>&1 || {
+        return 1
+    }
+    return 0
 }
 
 detect_input() {
@@ -169,26 +217,10 @@ render_menu() {
     done
 }
 
-case "$(is_root)" in
-    1)
-        error "Can't not acceess superuser permission"
-        info "Root your device with magisk or kernelsu based root provider and grant superuser permission"
-        exit 1
-    ;;
-    2)
-        error "Can't not find /bin/su"
-        info "Your root provider does not support /bin/su"
-        exit 1
-    ;;
-esac
+verify_root_access
 
-if [ ! -f "$managerPath/setup" ]; then
-    touch "$managerPath/setup"
-fi
-
-if [ "$(cat $managerPath/setup)" != "done" ]; then
+if ! is_enviroment_setup; then
     setup_enviroment
-    echo "done" > "$managerPath/setup"
 fi
 
 render_menu
