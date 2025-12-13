@@ -95,9 +95,14 @@ verify_root_access() {
                 exit 1
             ;;
             2)
-                error "Can't not find /bin/su"
-                warning "Your root provider does not support /bin/su"
-                info "Trying to create link between /bin/su -> /bin/sh"
+                if [ $attempts -eq 2 ]; then
+                    info "Retrying to create link between /bin/su -> /bin/sh"
+                else 
+                    error "Can't not find /bin/su"
+                    warning "Your root provider does not support /bin/su"
+                    info "Trying to create link between /bin/su -> /bin/sh"
+                fi
+                
                 su -c "(
                     set -e
                     mount -o remount,rw /system
@@ -105,8 +110,8 @@ verify_root_access() {
                     mount -o remount,ro /system
                 )" > /dev/null 2>&1 || {
                     error "Cannot create link"
-                    info "Please change your root provider or download and install /bin/su"
                     if [ $attempts -eq 2 ]; then
+                        info "Please change your root provider or download and install /bin/su"
                         warning "You might also run user build system which is not supported"
                         exit 1
                     fi
