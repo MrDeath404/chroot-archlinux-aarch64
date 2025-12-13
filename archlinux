@@ -101,19 +101,17 @@ verify_root_access() {
                 su -c "(
                     set -e
                     mount -o remount,rw /system
-                    ln -sf /system/bin/sh /system/bin/su
-                    mount -o remount,ro /system || true
+                    ln -s /system/bin/sh /system/bin/su
+                    mount -o remount,ro /system
                 )" > /dev/null 2>&1 || {
-                    if [ $attempts -eq 2 ]; then
-                        error "Can't create link"
-                        warning "You might also run user build system which is not supported"
-                    else
-                        error "Can't create link"
-                    fi
+                    error "Can't create link"
                     info "Please change your root provider or download and install /bin/su"
-                    exit 1
+                    if [ $attempts -eq 2 ]; then
+                        warning "You might also run user build system which is not supported"
+                        exit 1
+                    fi
                 }
-                success "Link bettween /bin/su -> /bin/sh was successfully created"
+                success "Link between /bin/su -> /bin/sh was successfully created"
             ;;
         esac
         attempts=$((attempts + 1))
