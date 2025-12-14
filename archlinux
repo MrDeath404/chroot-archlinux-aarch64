@@ -1,0 +1,554 @@
+#!/bin/bash
+
+messageSleep="0.2"
+renderSleep="0.1"
+
+termuxHome="/data/data/com.termux/files/home"
+managerPath="$termuxHome/.archlinux-manager"
+archPath=""
+tmpPath=""
+
+archlinux_setup="0"
+container_path="/data/local/container"
+default_account="root"
+mount_sdcard="1"
+
+arch_logo() {
+    printf "\e[36m                  ▄
+                 ▄█▄
+                ▄███▄
+               ▄█████▄
+              ▄███████▄
+             ▄ ▀▀██████▄
+            ▄██▄▄ ▀█████▄
+           ▄█████████████▄
+          ▄███████████████▄
+         ▄█████████████████▄
+        ▄███████████████████▄
+       ▄█████████▀▀▀▀████████▄
+      ▄████████▀      ▀███████▄
+     ▄█████████        ████▀▀██▄
+    ▄██████████        █████▄▄▄
+   ▄██████████▀        ▀█████████▄
+  ▄██████▀▀▀              ▀▀██████▄
+ ▄███▀▀                       ▀▀███▄
+▄▀▀                               ▀▀▄\e[0m\n\n"
+}
+
+warning() {
+    sleep "$messageSleep"
+    printf "[\e[0;33mWARNING\e[0m] - %s\n" "$1"
+}
+
+success() {
+    sleep "$messageSleep"
+    printf "[\e[0;32mSUCCESS\e[0m] - %s\n" "$1"
+}
+
+info() {
+    sleep "$messageSleep"
+    printf "[\e[0;34mINFO\e[0m] - %s\n" "$1"
+}
+
+error() {
+    sleep "$messageSleep"
+    printf "[\e[0;31mERROR\e[0m] - %s\n" "$1" >&2
+}
+
+good_option() {
+    local color="37"
+    local selected=""
+    [[ "$2" -eq "$3" ]] && color="32" && selected=" "
+    printf "%s\e[0;%sm%s\e[0m\n" "$selected" "$color" "$1"
+}
+
+bad_option() {
+    local color="37"
+    local selected=""
+    [[ "$2" -eq "$3" ]] && color="31" && selected=" "
+    printf "%s\e[0;%sm%s\e[0m\n" "$selected" "$color" "$1"
+}
+
+checkbox_information() {
+    local color="31"
+    local value=""
+    if declare -F "$2" >/dev/null; then
+        value="$("$2")"
+        if [ $? -eq 0 ]; then
+            color="32"
+        fi
+    fi
+    printf "%s [\e[0;%sm%s\e[0m]\n" "$1" "$color" "$value"
+}
+
+editable_variable() {
+    local color="37"
+    local selected=""
+    [[ "$2" -eq "$3" ]] && color="93" && selected=" "
+    printf "%s\e[0;%sm%s\e[0m\n" "$selected" "$color" "$1"
+}
+
+editable_option() {
+    local color="37"
+    local selected=""
+    [[ "$3" -eq "$4" ]] && color="93" && selected=" "
+    printf "%s\e[0;%sm%s\e[0m%s\n" "$selected" "$color" "$1" "$2"
+}
+
+is_root() {
+    if ! su -c "test -f \"/bin/su\"" > /dev/null 2>&1; then
+        echo "2"
+        return 2
+    fi
+    if ! su -c "exit" > /dev/null 2>&1; then
+        echo "1"
+        return 1
+    fi
+    echo "0"
+    return 0
+}
+
+verify_root_access() {
+    local attempts=1
+    while (( attempts <= 2 )); do
+        case "$(is_root)" in
+            1)
+                error "Can't not acceess superuser permission"
+                info "Root your device with Magisk or KernelSU based root provider and grant superuser permission"
+                exit 1
+            ;;
+            2)
+                if [ $attempts -eq 2 ]; then
+                    info "Retrying to create link between /bin/su -> /bin/sh"
+                else 
+                    error "Can't not find /bin/su"
+                    warning "Your root provider does not support /bin/su"
+                    info "Trying to create link between /bin/su -> /bin/sh"
+                fi
+                if ! su -c "mount | grep -qE \" on / type [^ ]+ \([^)]*rw,\"" > /dev/null 2>&1; then
+                    if ! su -c "mount -o remount,rw /" > /dev/null 2>&1; then
+                        error "You are running user build system which is not supported"
+                        info "At least make your file system read-write"
+                        exit 1
+                    fi
+                fi
+                su -c "ln -sf /system/bin/sh /system/bin/su" >/dev/null 2>&1 && {
+                    if su -c "mount | grep -qE \" on / type [^ ]+ \\([^)]*rw,\"" >/dev/null 2>&1; then
+                        if ! su -c "mount -o remount,ro /" >/dev/null 2>&1; then
+                            error "You are running user build system which is not supported"
+                            info "At least make your file system read-write"
+                            exit 1
+                        fi
+                    fi
+                } || {
+                    error "Cannot create link"
+                    if [ $attempts -eq 2 ]; then
+                        error "You are running user build system which is not supported"
+                        info "At least make your file system read-write"
+                        exit 1
+                    fi
+                }
+                success "Link between /bin/su -> /bin/sh was successfully created"
+            ;;
+        esac
+        attempts=$((attempts + 1))
+    done
+}
+
+save_archlinux_config() {
+   cat <<EOF | su -c "tee \"$termuxHome/.archlinux-manager/config.config\" >/dev/null"
+archlinux_setup="$archlinux_setup"
+container_path="$container_path"
+default_account="$default_account"
+mount_sdcard="$mount_sdcard"
+EOF
+}
+
+load_archlinux_config() {
+    if ! su -c "test -f \"$termuxHome/.archlinux-manager/config.config\""; then
+        save_archlinux_config
+    fi
+    . "$termuxHome/.archlinux-manager/config.config"
+    if [ -z "$container_path" ]; then
+        error "Failed to read config file"
+        printf "Do you want to reset configs to fix this problem? (Y/N): "
+        read opt
+        case "$opt" in
+            [yYtT])
+                su -c "rm -f \"$termuxHome/.archlinux-manager/config.config\""
+                load_archlinux_config
+            ;;
+            *)
+            error "Failed to parse config file"
+            exit 1
+            ;;
+        esac
+    fi
+    archPath="$container_path/arch"
+    tmpPath="$container_path/tmp"
+}
+
+setup_enviroment() {
+    info "Installing needed packages"
+    (
+        set -e
+        pkg update
+        pkg upgrade -y
+        pkg install root-repo -y
+        pkg install busybox -y
+        pkg install tar -y
+    ) || {
+        error "Failed to install some packages"
+        exit 1
+    }
+    success "Packages were successfully installed"
+}
+
+is_enviroment_setup() {
+    (
+        set -e
+        pkg list-installed | grep "busybox"
+        pkg list-installed | grep "tar"
+    ) > /dev/null 2>&1 && return 0
+    return 1
+}
+
+detect_input() {
+    local key next
+
+    if ! read -rsn1 key 2>/dev/null; then
+        echo "0"; return 0
+    fi
+    if [ -z "$key" ]; then
+        echo "1"; return 0
+    fi
+    if [ "$key" = $'\e' ]; then
+        if ! read -rsn2 next 2>/dev/null; then
+            echo "0"; return 0
+        fi
+        case "$key$next" in
+            $'\e[A') echo "3"; return 0 ;;
+            $'\e[B') echo "2"; return 0 ;;
+        esac
+    fi
+    echo "0";
+}
+
+pause() {
+    if [ -z "$1" ]; then
+        info "Press any key to continue"
+    else 
+        info "$1"
+    fi
+    read -rsn1
+}
+
+is_zip_downloaded() {
+    if ! su -c "test -f \"$tmpPath/ArchLinuxARM-aarch64-latest.tar.gz\"" >/dev/null 2>&1; then
+        echo "UNAVAILABLE"
+        return 1
+    fi
+    echo "AVAILABLE"
+}
+
+is_arch_booted() {
+    su -c "(
+        set -e
+        mountpoint -q \"$archPath/proc\"
+        mountpoint -q \"$archPath/sys\"
+        mountpoint -q \"$archPath/dev\"
+        mountpoint -q \"$archPath/dev/pts\"
+    )" > /dev/null 2>&1 || {
+        echo "OFF"
+        return 1
+    }
+    echo "RUNNING"
+}
+
+get_arch_status() {
+    if ! su -c "test -d \"$archPath\"" >/dev/null 2>&1 || [ -z "$(su -c "ls -A \"$archPath\"" 2>/dev/null)" ]; then
+        echo "UNAVAILABLE"
+        return 2
+    fi
+    is_arch_booted
+}
+
+get_archlinux_setup() {
+    if [ "$archlinux_setup" == "1" ]; then
+        echo "FALSE"
+        return 1
+    fi
+    echo "TRUE"
+}
+
+get_termux_setup() {
+    if [ "$termux_setup" == "1" ]; then
+        echo "FALSE"
+        return 1
+    fi
+    echo "TRUE"
+}
+
+render_account_manager() {
+    local selected=1
+    local input="0"
+    local doRender="1"
+
+    if [ "$(get_arch_status)" == "UNAVAILABLE" ]; then
+        clear
+        arch_logo
+        error "ArchLinux is not installed on this device"
+        info "Please first install ArchLinux"
+        return 1
+    fi
+    mapfile -t users < <(
+        su -c "awk -F: '(\$3==0 || 
+        \$3>=1000) && (\$7 ~ /(bash|zsh|fish|ksh)\$/) && 
+        (\$1 != \"alarm\") {print \$1}' \"$archPath/etc/passwd\""
+    )
+    local usersCount="${#users[@]}"
+    local max=$((usersCount + 3))
+
+    while true; do
+        if [ "$doRender" == "1" ]; then
+            clear
+            arch_logo
+            good_option "Create Account" $selected 1
+            bad_option "Delete Account" $selected 2
+            local index=3
+            for user in "${users[@]}"; do
+                editable_variable "$user" $selected $index
+                index=$((index + 1))
+            done
+            bad_option "Exit" $selected $max
+            doReneder="0"
+        fi
+        input="$(detect_input)"
+        while [[ "$input" == "0" ]]; do
+            input="$(detect_input)"
+            sleep "$renderSleep"
+        done
+        case "$input" in
+            1):
+                case "$selected" in
+                    1):
+                        clear
+                        arch_logo
+                    ;;
+                    2):
+                        clear
+                        arch_logo
+                    ;;
+                esac
+                if (( selected == max )); then
+                    break
+                else
+                    default_account="${users[$((selected - 3))]}"
+                    break
+                fi
+            ;;
+            2)
+                selected=$((selected + 1))
+                (( selected > $max )) && selected=1
+                doRender="1"
+            ;;
+            3)
+                selected=$((selected - 1))
+                (( selected < 1 )) && selected=$max
+                doRender="1"
+            ;;
+        esac
+    done
+}
+
+render_manage() {
+    local selected=1
+    local input="0"
+    local doRender="1"
+
+    if [ "$(get_arch_status)" == "UNAVAILABLE" ]; then
+        clear
+        arch_logo
+        error "ArchLinux is not installed on this device"
+        info "Please first install ArchLinux"
+        pause
+        return 1
+    fi
+    while true; do
+        if [ "$doRender" == "1" ]; then
+            clear
+            arch_logo
+            checkbox_information "ArchLinux Status" "get_arch_status"
+            checkbox_information "ZIP Status" "is_zip_downloaded"
+            editable_option "Container Path: " "$container_path" $selected 1
+            editable_option "Default account: " "$default_account" $selected 2
+            mountSDCard="FALSE"
+            if [ "$mount_sdcard" == "1" ]; then
+                mountSDCard="TRUE"
+            fi
+            editable_option "Mount SDCard: " "$mountSDCard" $selected 3
+            bad_option "Exit" $selected 4
+            doReneder="0"
+        fi
+        input="$(detect_input)"
+        while [[ "$input" == "0" ]]; do
+            input="$(detect_input)"
+            sleep "$renderSleep"
+        done
+        case "$input" in
+            1):
+                case "$selected" in
+                    1)
+                        clear
+                        arch_logo
+                        printf "Enter new valid container directory: "
+                        printf "\e[0;93m"
+                        read new_container_path
+                        printf "\e[0;0m"
+                        new_container_path="${new_container_path%/}"
+                        if [[ "$new_container_path" == */container ]]; then
+                            new_container_path="${new_container_path%/container}"
+                        elif [[ -z "$new_container_path" ]]; then
+                            error "Path is empty"
+                            pause
+                        elif [[ "$new_container_path" != /* ]]; then
+                            error "Path must be absolute"
+                            pause
+                        elif ! su -c "test -d \"$new_container_path\"" >/dev/null 2>&1; then
+                            error "Directory does not exist"
+                            pause
+                        else
+                            container_path="$new_container_path/container"
+                        fi
+                    ;;
+                    2)
+                        render_account_manager
+                        selected=1
+                        doReneder="1"
+                    ;;
+                    3)
+                        if [ "$mount_sdcard" == "1" ]; then
+                            mount_sdcard="0"
+                        else
+                            mount_sdcard="1"
+                        fi
+                    ;;
+                    4)
+                        clear
+                        arch_logo
+                        printf "Do you want to save configs? (Y/N): "
+                        read opt
+                        case "$opt" in
+                            [yYtT])
+                                save_archlinux_config
+                            ;;
+                            *)
+                                load_archlinux_config
+                            ;;
+                        esac
+                        break
+                    ;;
+                esac
+            ;;
+            2)
+                selected=$((selected + 1))
+                (( selected > 4 )) && selected=1
+                doRender="1"
+            ;;
+            3)
+                selected=$((selected - 1))
+                (( selected < 1 )) && selected=4
+                doRender="1"
+            ;;
+        esac
+    done
+}
+
+render_menu() {
+    local selected=1
+    local input="0"
+    local doRender="1"
+
+    while true; do
+        if [ "$doRender" == "1" ]; then
+            clear
+            arch_logo
+            good_option "Manage" $selected 1
+            good_option "Login" $selected 2
+            good_option "Install" $selected 3
+            bad_option "Uninstall" $selected 4
+            bad_option "Reinstall" $selected 5
+            bad_option "Remove All Files" $selected 6
+            bad_option "Remove ZIP" $selected 7
+            bad_option "Exit" $selected 8
+            doReneder="0"
+        fi
+        input="$(detect_input)"
+        while [[ "$input" == "0" ]]; do
+            input="$(detect_input)"
+            sleep "$renderSleep"
+        done
+        case "$input" in
+            1)
+                case "$selected" in
+                    1)
+                        render_manage
+                        selected=1
+                        doReneder="1"
+                    ;;
+                    2)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" login
+                        pause
+                    ;;
+                    3)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" install
+                        pause
+                    ;;
+                    4)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" uninstall
+                        pause
+                    ;;
+                    5)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" reinstall
+                        pause
+                    ;;
+                    6)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" clean_all
+                        pause
+                    ;;
+                    7)
+                        clear
+                        su -c "$termuxHome/.archlinux-manager/archlinux-manager.sh" clean_zip
+                        pause
+                    ;;
+                    8)
+                        clear
+                        exit 0
+                    ;;
+                esac
+            ;;
+            2)
+                selected=$((selected + 1))
+                (( selected > 8 )) && selected=1
+                doRender="1"
+            ;;
+            3)
+                selected=$((selected - 1))
+                (( selected < 1 )) && selected=8
+                doRender="1"
+            ;;
+        esac
+    done
+}
+
+verify_root_access
+if ! is_enviroment_setup; then
+    setup_enviroment
+fi
+load_archlinux_config
+render_menu
