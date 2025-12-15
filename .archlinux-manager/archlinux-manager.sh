@@ -11,6 +11,7 @@ tmpPath=""
 zipPath=""
 zipName="ArchLinuxARM-aarch64-latest.tar.gz"
 
+termux_setup="0"
 archlinux_setup="0"
 container_path="/data/local/container"
 default_account="root"
@@ -69,6 +70,7 @@ pause() {
 
 save_archlinux_config() {
    cat <<EOF | tee "$termuxHome/.archlinux-manager/config.config" >/dev/null
+termux_setup="$termux_setup"
 archlinux_setup="$archlinux_setup"
 container_path="$container_path"
 default_account="$default_account"
@@ -113,7 +115,19 @@ is_arch_booted() {
     }
 }
 
+get_arch_status() {
+    if ! su -c "test -d \"$archPath\"" >/dev/null 2>&1 || [ -z "$(su -c "ls -A \"$archPath\"" 2>/dev/null)" ]; then
+        echo "UNAVAILABLE"
+        return 2
+    fi
+    is_arch_booted
+}
+
 arch_boot() {
+    if [ "$(get_arch_status)" == "UNAVAILABLE" ]; then
+        warning "ArchLinux is not installed on this device."
+        exit 0
+    fi
     info "Booting ArchLinux"
     if is_arch_booted; then
         warning "ArchLinux is already running"
@@ -166,19 +180,36 @@ arch_shutdown() {
         warning "ArchLinux is already disabled"
         return 0
     fi
-    if umount "$archPath/media/sdcard" > /dev/null 2>&1; then
+    # TODO: make faster finder
+    for p in /proc/[0-9]*/exe; do
+        exe=$(readlink "$p" 2>/dev/null) || continue
+
+        case "$exe" in
+            "$archPath"/*)
+                pid=${p#/proc/}
+                pid=${pid%/exe}
+
+                if kill -9 "$pid" > /dev/null 2>&1; then
+                    success "Killed process PID $pid"
+                else
+                    error "Failed to kill process PID $pid"
+                fi
+            ;;
+        esac
+    done
+    if umount -l "$archPath/media/sdcard" > /dev/null 2>&1; then
         success "Unmounted /media/sdcard"
     fi
-    if umount "$archPath/dev/pts" > /dev/null 2>&1; then
+    if umount -l "$archPath/dev/pts" > /dev/null 2>&1; then
         success "Unmounted /dev/pts"
     fi
-    if umount "$archPath/proc" > /dev/null 2>&1; then
+    if umount -l "$archPath/proc" > /dev/null 2>&1; then
         success "Unmounted /proc"
     fi
-    if umount "$archPath/sys" > /dev/null 2>&1; then
+    if umount -l "$archPath/sys" > /dev/null 2>&1; then
         success "Unmounted /sys"
     fi
-    if umount "$archPath/dev" > /dev/null 2>&1; then
+    if umount -l "$archPath/dev" > /dev/null 2>&1; then
         success "Unmounted /dev"
     fi
     if mount -o remount,nodev,nosuid /data > /dev/null 2>&1; then
@@ -225,7 +256,7 @@ EOF
         error "Failed to setup ArchLinux permissions"
         warning "This can make the ArchLinux environment unusable on your device"
         pause
-        exit 1
+        return 1
     }
     archlinux_setup="1"
     save_archlinux_config
@@ -260,7 +291,7 @@ download_zip() {
 
 arch_install() {
     info "Installing ArchLinux at $archPath"
-    if test -d "$archPath"; then
+    if [ "$(get_arch_status)" != "UNAVAILABLE" ]; then
         warning "ArchLinux is already install on this device. If you want you can use \"reinstall\" option"
         exit 0
     else
@@ -357,6 +388,7 @@ case "$1" in
             if ! arch_boot; then
                 pause
             fi
+            sleep 1s
         fi
         clear
         arch_logo
